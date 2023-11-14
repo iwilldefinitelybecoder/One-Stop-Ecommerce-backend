@@ -30,8 +30,8 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "vendor_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FK_vendor_id"))
     private Vendor vendor;
-    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL)
-    private productTypeTags productTypeTags;
+    @ElementCollection
+    private List<String>productTypeTags;
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<resourceDetails> images = new ArrayList<>();
 }

@@ -1,5 +1,8 @@
 package com.Onestop.ecommerce.Controller.productController;
 
+import com.Onestop.ecommerce.Dto.productsDto.productsDto;
+import com.Onestop.ecommerce.Dto.productsDto.productsTagsDto;
+import com.Onestop.ecommerce.Dto.productsDto.resourceDetailsTdo;
 import com.Onestop.ecommerce.Entity.products.Product;
 
 import com.Onestop.ecommerce.Service.products.productsServices;
@@ -7,10 +10,12 @@ import com.Onestop.ecommerce.Service.products.productsServices;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 
+import java.security.Principal;
 import java.util.List;
 
 
@@ -26,37 +31,42 @@ public class productController {
     public ResponseEntity<?> addProduct(
             @RequestParam("name") String name,
             @RequestParam("description") String description,
-            @RequestParam("regularPrice") double price,
             @RequestParam("category") String category,
             @RequestParam("stock") int stock,
+            @RequestParam("regularPrice") double regularPrice,
+            @RequestParam(value = "salePrice",required = false) double salePrice,
             @RequestParam("tags") List<String> tags,
-            @RequestParam("images") List<MultipartFile> images,
-            @RequestParam("salePrice") double salePrice
-    ) {
-        log.info("Name is {}", name);
-        Product product = new Product();
-        product.setName(name);
-        product.setDescription(description);
-        product.setRegularPrice(price);
-        product.setCategory(category);
-        product.setStock(stock);
+            @RequestParam("images") List<MultipartFile> images
 
-        if(salePrice != 0) {
-            product.setSalePrice(salePrice);
-        }
+            ){
+
+        for(String tag:tags) {
+            System.out.println(tag);
+        };
+        var request = productsDto.builder()
+                .name(name)
+                .description(description)
+                .category(category)
+                .stock(stock)
+                .regularPrice(regularPrice)
+                .salePrice(salePrice !=0?salePrice:0)
+                .productTypeTags(tags)
+                .build();
+
+        var imagesDto = resourceDetailsTdo.builder()
+                .image(images)
+                .build();
 
 
+        String response1 = ProductsServices.saveProduct(request);
 
-
-
-        String response1 = ProductsServices.saveProduct(product);
-        String response2 = ProductsServices.saveTags(tags, product.getId());
-        String response3 = ProductsServices.saveImages(images, product.getId());
-
-        if(response1.equals("success") && response2.equals("success") && response3.equals("success")) {
+        String response3 = ProductsServices.saveImages(imagesDto, response1);
+        log.info("response1 is {}",response1);
+        log.info("response3 is {}",response3);
+        if(response1!=null && response3.equals("success")) {
             return ResponseEntity.status(200).body("success");
         } else {
-            return ResponseEntity.status(500).body("error");
+            return ResponseEntity.status(500).body("errorrrr");
         }
 
 
@@ -66,7 +76,7 @@ public class productController {
 
 
     }
- @GetMapping("/getproducts")
+ @GetMapping("/getproducts/{}")
     public ResponseEntity<?> getProducts() {
         try{
             List<Product> products = ProductsServices.getProducts();

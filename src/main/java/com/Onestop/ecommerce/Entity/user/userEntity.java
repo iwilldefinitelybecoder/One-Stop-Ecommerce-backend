@@ -3,6 +3,8 @@ package com.Onestop.ecommerce.Entity.user;
 
 
 import com.Onestop.ecommerce.Entity.Role;
+import com.Onestop.ecommerce.Entity.UserMessages.UserMessages;
+import com.Onestop.ecommerce.Entity.vendor.Vendor;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +14,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -34,7 +37,10 @@ public class userEntity implements UserDetails {
     private String email;
     @Enumerated(EnumType.STRING)
     private Role role;
+    @OneToMany( cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Collection<UserMessages> userMessages = new ArrayList<>();
     private Long ImageId;
+    private boolean isEnabled = false;
 
 
     @Override
@@ -62,8 +68,5 @@ public class userEntity implements UserDetails {
         return true;
     }
 
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
+
 }

@@ -6,6 +6,7 @@ import com.Onestop.ecommerce.Controller.authUser.AuthenticationResponse;
 import com.Onestop.ecommerce.Controller.authUser.RegisterRequest;
 import com.Onestop.ecommerce.Entity.Role;
 import com.Onestop.ecommerce.Entity.user.userEntity;
+import com.Onestop.ecommerce.Exceptions.UserAlreadyExistsException;
 import com.Onestop.ecommerce.Repository.userRepo.UserRepository;
 import com.Onestop.ecommerce.configuration.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,11 @@ public class AuthenticateService {
 
     private final AuthenticationManager authenticationManager;
 
-    public AuthenticationResponse register(RegisterRequest registerRequest) {
+    public AuthenticationResponse register(RegisterRequest registerRequest)throws UserAlreadyExistsException {
+        var userExists = userRespository.findByEmail(registerRequest.getEmail());
+        if (userExists.isPresent()) {
+        throw new UserAlreadyExistsException("User already exists");
+        }
         var user = userEntity.builder()
                 .firstName(registerRequest.getFirstName())
                 .lastName(registerRequest.getLastName())
@@ -47,13 +52,18 @@ public class AuthenticateService {
     }
 
     public AuthenticationResponse authenticate(AuthenticateRequest request) {
-        log.info("User is {}", request.getEmail(), request.getPassword());
+        var user1 = userRespository.findByEmail(request.getEmail());
+        if (user1.isEmpty()) {
+            throw new RuntimeException("User not found");
+        }
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
                         request.getPassword()
                 )
         );
+
         var user =
                 userRespository.findByEmail(request.getEmail())
                         .orElseThrow();
@@ -71,6 +81,35 @@ public class AuthenticateService {
     public userEntity getUser(String email) {
         return userRespository.findByEmail(email).orElseThrow();
     }
-}
+
+    public String resetPassword(String email, String password) {
+        var user = userRespository.findByEmail(email).orElseThrow();
+        user.setPassword(passwordEncoder.encode(password));
+        try {
+            userRespository.save(user);
+            return "SUCCESS";
+        }catch (Exception e){
+            return "FAILED";
+        }
+
+
+
+
+        }
+    public String updatePassword(String email, String password, String oldPassword) {
+        var user = userRespository.findByEmail(email).orElseThrow();
+        if(passwordEncoder.matches(oldPassword,user.getPassword())){
+            user.setPassword(passwordEncoder.encode(password));
+            try {
+                userRespository.save(user);
+                return "SUCCESS";
+            }catch (Exception e){
+                return "FAILED";
+            }
+        }
+        return "PASSWORD_MISMATCH";
+
+    }
+    }
 
 

@@ -1,6 +1,8 @@
 package com.Onestop.ecommerce.Service.products;
 
-import com.Onestop.ecommerce.Controller.productController.ProductRequest;
+import com.Onestop.ecommerce.Dto.productsDto.productsDto;
+import com.Onestop.ecommerce.Dto.productsDto.productsTagsDto;
+import com.Onestop.ecommerce.Dto.productsDto.resourceDetailsTdo;
 import com.Onestop.ecommerce.Entity.products.Product;
 import com.Onestop.ecommerce.Entity.products.productTypeTags;
 import com.Onestop.ecommerce.Entity.products.resourceDetails;
@@ -38,26 +40,26 @@ public class productsServices implements productServices {
 
 
     @Override
-    public String saveProduct(Product products) {
-        return productsRepo.save(products).toString();
+    public String saveProduct(productsDto request) {
+        var product = Product.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .category(request.getCategory())
+                .stock(request.getStock())
+                .regularPrice(request.getRegularPrice())
+                .productTypeTags(request.getProductTypeTags())
+                .salePrice(request.getSalePrice() !=0?request.getSalePrice():0)
+                .build();
+        try {
+            productsRepo.save(product);
+            return product.getId().toString();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return "error";
+        }
     }
 
-    @Override
-    public String saveTags(List<String> tags, Long id) {
 
-            productTypeTags tag = new productTypeTags();
-            tag.setName(tags);
-            tag.setProduct(findProductById(id));
-            try {
-                tagsRepo.save(tag);
-
-            } catch (Exception e) {
-                log.error(e.getMessage());
-            }
-
-        return "success";
-
-    }
 
     @Override
     public Product findProductById(Long id) {
@@ -65,19 +67,21 @@ public class productsServices implements productServices {
     }
 
     @Override
-    public String saveImages(List<MultipartFile> images,Long id) {
+    public String saveImages(resourceDetailsTdo images, String ids) {
         boolean success = true; // Initialize a boolean variable to track success
-
-        for (MultipartFile image : images) {
+        Long id = Long.parseLong(ids);
+        for (MultipartFile image : images.getImage()) {
             try {
                 HashMap response = SaveImageTOFs(image);
                 if (response.get("originalFileName") != null && response.get("destination") != null) {
                     log.info("saving image");
-                    resourceDetails resourceDetails = new resourceDetails();
-                    resourceDetails.setName(response.get("originalFileName").toString());
-                    resourceDetails.setUrl(response.get("destination").toString());
-                    resourceDetails.setProduct( findProductById(id));
-                    resourceRepo.save(resourceDetails);
+                   var resource = resourceDetails.builder()
+                                   .name(response.get("originalFileName").toString())
+                                           .url(response.get("destination").toString())
+                                             .product(findProductById(id))
+                                                .build();
+
+                    resourceRepo.save(resource);
 
                 } else {
                     // Handle the case where image details are missing or invalid

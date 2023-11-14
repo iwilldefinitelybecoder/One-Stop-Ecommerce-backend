@@ -1,16 +1,14 @@
-package com.Onestop.ecommerce.Dto.productsDto;
+package com.Onestop.ecommerce.Controller.vendor;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class productsTagsDto {
-    private List<String> name;
+public class VendorLoginRequest {
+    private String email;
 }

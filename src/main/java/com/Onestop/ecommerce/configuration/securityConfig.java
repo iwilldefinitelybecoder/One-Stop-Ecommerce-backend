@@ -37,6 +37,7 @@ public class securityConfig  {
                 .authorizeHttpRequests((authz)->authz
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/user/getprofileicon/**").permitAll()
+                        .requestMatchers("/api/v1/product/**").permitAll()
                         .anyRequest().permitAll()
                 )
 //

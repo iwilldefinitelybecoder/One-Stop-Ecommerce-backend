@@ -1,5 +1,7 @@
 package com.Onestop.ecommerce.Service.VendorServices;
 
+import com.Onestop.ecommerce.Controller.vendor.VendorLoginRequest;
+import com.Onestop.ecommerce.Controller.vendor.VendorLoginResponse;
 import com.Onestop.ecommerce.Controller.vendor.VendorRequest;
 import com.Onestop.ecommerce.Entity.Role;
 import com.Onestop.ecommerce.Entity.vendor.Vendor;
@@ -34,5 +36,25 @@ public class VendorServices {
         return "SUCCESS";
 
 
+    }
+
+    public VendorLoginResponse authenticate(String email) {
+        var user  = userRepository.findByEmail(email).orElse(null);
+        if(user == null){
+            return null;
+        }
+        if(user.getRole().equals(Role.VENDOR)) {
+
+            var vendor = VendorLoginResponse.builder()
+                    .email(user.getEmail())
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .imageId(user.getImageId())
+                    .role(user.getRole().name())
+                    .build();
+            return vendor;
+        }else{
+            return null;
+        }
     }
 }

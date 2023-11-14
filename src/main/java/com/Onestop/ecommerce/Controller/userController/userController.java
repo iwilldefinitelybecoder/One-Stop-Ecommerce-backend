@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,6 +26,8 @@ public class userController {
     @PostMapping("/uploadprofileicon")
 public ResponseEntity<?> uploadProfileIcon(@RequestParam("email") String email,
                                            @RequestParam("image") MultipartFile image){
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info("username: {}", username);
         var request = ImgUploadRequest.builder()
                 .email(email)
                 .Image(image)
