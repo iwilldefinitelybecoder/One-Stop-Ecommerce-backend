@@ -1,24 +1,34 @@
 package com.Onestop.ecommerce.Entity.address;
 
 
+import com.Onestop.ecommerce.Entity.Customer.Customer;
 import com.Onestop.ecommerce.Entity.user.userEntity;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.UUID;
 
 @Entity
 @Data
-@Table(name = "address")
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "address",indexes = {@Index(name = "id_Identifier",columnList = "address_id,identifier")})
     public class Address {
         @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         @Column(name = "address_id")
-        private String addressId;
+        private Long addressId;
 
         @ManyToOne
-        @JoinColumn(name = "user_id")
-        private userEntity user;
+        @JoinColumn(name = "customer_id")
+        private Customer customer;
 
-        @Column(name = "street_address", length = 300)
-        private String streetAddress;
+        @Column(length = 300)
+        private String address;
 
         @Column(length = 300)
         private String city;
@@ -26,11 +36,23 @@ import lombok.Data;
         @Column(length = 50)
         private String state;
 
-        @Column(name = "postal_code", precision = 10)
-        private Long postalCode;
+        @Column(name = "street", length = 300)
+        private String street;
+
+        @Column(name = "zip_code", length = 10)
+        private String zipCode;
 
         @Column(length = 20)
         private String country;
+
+        private String identifier;
+
+        @PrePersist
+        public void prePersist() {
+            if (this.identifier == null) {
+                this.identifier = UUID.randomUUID().toString();
+            }
+        }
 
         // Getters and setters
     }

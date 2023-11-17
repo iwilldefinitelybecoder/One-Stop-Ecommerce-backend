@@ -1,8 +1,11 @@
 package com.Onestop.ecommerce.Entity.card;
 
+import com.Onestop.ecommerce.Entity.Customer.Customer;
 import com.Onestop.ecommerce.Entity.user.userEntity;
 import jakarta.persistence.*;
 import lombok.Data;
+
+import java.time.LocalDate;
 
 
 @Entity
@@ -14,16 +17,19 @@ public class CardInfo {
     private String cardId;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private userEntity user;
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
 
     private String name;
 
     @Column(precision = 12)
     private Long number;
 
+    @Enumerated(EnumType.STRING)
+    private CardType type;
+
     @Column(name = "expire_date")
-    private Integer expireDate;
+    private LocalDate expireDate;
 
     // Getters and setters
 }

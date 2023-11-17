@@ -1,6 +1,7 @@
 package com.Onestop.ecommerce.Entity.products;
 
 
+import com.Onestop.ecommerce.Entity.user.userEntity;
 import com.Onestop.ecommerce.Entity.vendor.Vendor;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -16,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "products" )
+@Table(name = "products",indexes = @Index(name = "identifier_index",columnList = "identifier,id",unique = true))
 public class Product {
 
      @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,11 +28,21 @@ public class Product {
     private int stock;
     private double regularPrice;
     private double salePrice = 0;
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private String identifier;
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "vendor_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FK_vendor_id"))
-    private Vendor vendor;
+    private userEntity user;
     @ElementCollection
     private List<String>productTypeTags;
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<resourceDetails> images = new ArrayList<>();
+
+
+    @PrePersist
+    public void prePersist() {
+        if (this.identifier == null) {
+            this.identifier = java.util.UUID.randomUUID().toString();
+        }
+    }
 }

@@ -77,7 +77,7 @@ public class productsServices implements productServices {
                     log.info("saving image");
                    var resource = resourceDetails.builder()
                                    .name(response.get("originalFileName").toString())
-                                           .url(response.get("destination").toString())
+                                           .url(response.get("newFileName").toString())
                                              .product(findProductById(id))
                                                 .build();
 
@@ -127,6 +127,7 @@ public class productsServices implements productServices {
             HashMap<String, String> response = new HashMap<>();
             response.put("originalFileName", originalFileName);
             response.put("destination", destination.getAbsolutePath());
+            response.put("newFileName", uniqueFileName);
             image.transferTo(destination);
 
             // Return a success response

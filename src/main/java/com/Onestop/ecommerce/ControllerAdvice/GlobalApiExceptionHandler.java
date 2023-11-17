@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ControllerAdvice
 public class GlobalApiExceptionHandler {
 
-    @ExceptionHandler(UserAlreadyExistsException.class)
+    @ExceptionHandler({UserAlreadyExistsException.class,InvalidTokenException.class,ExpiredTokenException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public ExceptionResponse handleUserNotFoundException(UserAlreadyExistsException ex) {
@@ -18,28 +18,6 @@ public class GlobalApiExceptionHandler {
        response.setMessage(ex.getMessage());
          response.setErrorCode("409");
             response.setRequestedURI("http://localhost:8080/api/v1/user");
-            return response;
-    }
-
-    @ExceptionHandler(InvalidTokenException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ResponseBody
-    public ExceptionResponse handleInvalidTokenException(InvalidTokenException ex) {
-       ExceptionResponse response = new ExceptionResponse();
-       response.setMessage(ex.getMessage());
-         response.setErrorCode("409");
-            response.setRequestedURI("http://localhost:8080/api/v1/Auth/verifyToken");
-            return response;
-    }
-
-    @ExceptionHandler(ExpiredTokenException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ResponseBody
-    public ExceptionResponse handleExpiredTokenException(ExpiredTokenException ex) {
-       ExceptionResponse response = new ExceptionResponse();
-       response.setMessage(ex.getMessage());
-         response.setErrorCode("409");
-            response.setRequestedURI("http://localhost:8080/api/v1/Auth/verifyToken");
             return response;
     }
 
@@ -54,7 +32,7 @@ public class GlobalApiExceptionHandler {
             return response;
     }
 
-    @ExceptionHandler(UserNotfoundException.class)
+    @ExceptionHandler({UserNotfoundException.class,CustomerNotFoundException.class,UserEmailNotVerifiedException.class,AddressNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ResponseBody
     public ExceptionResponse handleUserNotFoundException(UserNotfoundException ex) {
@@ -64,4 +42,5 @@ public class GlobalApiExceptionHandler {
             response.setRequestedURI("http://localhost:8080/api/v1/user");
             return response;
     }
+
 }

@@ -17,7 +17,7 @@ public class resourceDetails {
     private Long id;
     private String name;
     private String url;
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FK_product_id"))
     private Product product;
 }

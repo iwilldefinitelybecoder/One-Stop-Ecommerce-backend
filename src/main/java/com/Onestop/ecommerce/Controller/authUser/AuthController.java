@@ -49,10 +49,13 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> authenticate(
+    public ResponseEntity<?> authenticate(
             @RequestBody AuthenticateRequest request) {
+        try{
         return ResponseEntity.ok(services.authenticate(request));
-
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
     @GetMapping("/tokenUser")
@@ -62,6 +65,7 @@ public class AuthController {
             log.info("User Details: {}",user);
             return ResponseEntity.status(HttpStatus.OK).body(user);
         }catch (Exception e){
+            log.info("Error: {}",e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }

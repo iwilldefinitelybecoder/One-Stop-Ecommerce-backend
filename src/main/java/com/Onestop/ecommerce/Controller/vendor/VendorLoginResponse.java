@@ -1,9 +1,12 @@
 package com.Onestop.ecommerce.Controller.vendor;
 
+import com.Onestop.ecommerce.Entity.user.RoleEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Collection;
 
 @Data
 @AllArgsConstructor
@@ -15,6 +18,6 @@ public class VendorLoginResponse {
     private String firstName;
     private String lastName;
     private Long imageId;
-    private String role;
+    private Collection<RoleEntity> roles;
     private Long vendorId;
 }

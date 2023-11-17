@@ -23,7 +23,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = "email"))
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = "email"),indexes = @Index(name = "email_index",columnList = "email",unique = true))
 public class userEntity implements UserDetails {
 
     @Id
@@ -35,8 +35,9 @@ public class userEntity implements UserDetails {
     private String password;
     @Column(unique = true )
     private String email;
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    @ManyToMany(fetch = FetchType.EAGER)
+    private Collection<RoleEntity> roles = new ArrayList<>();
+
     @OneToMany( cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Collection<UserMessages> userMessages = new ArrayList<>();
     private Long ImageId;
@@ -45,7 +46,12 @@ public class userEntity implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+        for(RoleEntity role : roles){
+            authorities.add(new SimpleGrantedAuthority(role.getName()));
+        }
+        return authorities;
+
     }
 
     @Override

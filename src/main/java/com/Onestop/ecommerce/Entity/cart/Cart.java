@@ -2,29 +2,65 @@ package com.Onestop.ecommerce.Entity.cart;
 
 
 
-import com.Onestop.ecommerce.Entity.products.Product;
+import com.Onestop.ecommerce.Entity.Customer.Customer;
 
-import com.Onestop.ecommerce.Entity.user.userEntity;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.UUID;
 
 @Entity
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "cart")
 public class Cart {
     @Id
-    @Column(name = "Cart_id")
-    private String cartId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "cart_id")
+    private Long Id;
 
-    @OneToOne
-    @JoinColumn(name = "user_id")
-    private userEntity user;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id")
-    private Product product;
+    @OneToMany(cascade = CascadeType.ALL)
+    private Collection<Items> items = new ArrayList<>();
 
-    private Long quantity;
+    private String identifier;
+    private  Integer totalItems;
+
+    private double CartTotal;
+
+    @PrePersist
+    public void performPersistActions(){
+        uniqueIdentifier();
+        performPreUpdateActions();
+    }
+    @PreUpdate
+    public void performPreUpdateActions(){
+        updateTotalItems();
+    }
+
+    private void uniqueIdentifier(){
+        this.identifier = UUID.randomUUID().toString();
+    }
+
+
+    private void updateTotalItems(){
+        if(this.items == null){
+            return;
+        }
+        this.totalItems = this.items.size();
+    }
+
+
 
     // Getters and setters
 }

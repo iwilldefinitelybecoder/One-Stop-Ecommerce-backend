@@ -6,6 +6,7 @@ import com.Onestop.ecommerce.Controller.vendor.VendorRequest;
 import com.Onestop.ecommerce.Entity.Role;
 import com.Onestop.ecommerce.Entity.vendor.Vendor;
 import com.Onestop.ecommerce.Repository.VendorRepo.VendorRepository;
+import com.Onestop.ecommerce.Repository.userRepo.RoleRepository;
 import com.Onestop.ecommerce.Repository.userRepo.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +19,11 @@ public class VendorServices {
 
     private final VendorRepository vendorRepository;
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     public String register(VendorRequest request) {
 
         var user = userRepository.findByEmail(request.getUserEmail()).orElse(null);
+        var role = roleRepository.findByName("VENDOR");
         if(user == null){
             return "NULL";
         }
@@ -30,9 +33,11 @@ public class VendorServices {
                 .vendorCompanyName(request.getVendorCompanyName())
                 .build();
         vendorRepository.save(vendor);
-        user.setRole(Role.VENDOR);
+//        user.setRole(Role.VENDOR);
+        var addrole = user.getRoles();
+        addrole.add(role);
+        user.setRoles(addrole);
         userRepository.save(user);
-
         return "SUCCESS";
 
 
@@ -43,16 +48,15 @@ public class VendorServices {
         if(user == null){
             return null;
         }
-        if(user.getRole().equals(Role.VENDOR)) {
+        if(user.getRoles().stream().toList().contains("VENDOR")) {
 
-            var vendor = VendorLoginResponse.builder()
+            return VendorLoginResponse.builder()
                     .email(user.getEmail())
                     .firstName(user.getFirstName())
                     .lastName(user.getLastName())
                     .imageId(user.getImageId())
-                    .role(user.getRole().name())
+                    .roles(user.getRoles())
                     .build();
-            return vendor;
         }else{
             return null;
         }

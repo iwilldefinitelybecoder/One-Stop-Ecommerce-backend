@@ -49,7 +49,6 @@ public class TokenService {
         }
         user.setEnabled(true);
         userRepository.save(user);
-        verifyTokenRepo.deleteById(verifyEmailToken.getId());
         return "valid";
     }
 
