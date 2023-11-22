@@ -3,7 +3,7 @@ package com.Onestop.ecommerce.Service.Customer;
 import com.Onestop.ecommerce.Dto.CustomerDto.AddressRequest;
 import com.Onestop.ecommerce.Dto.CustomerDto.AddressResponse;
 import com.Onestop.ecommerce.Entity.Customer.Customer;
-import com.Onestop.ecommerce.Entity.address.Address;
+import com.Onestop.ecommerce.Entity.Customer.address.Address;
 import com.Onestop.ecommerce.Exceptions.AddressNotFoundException;
 import com.Onestop.ecommerce.Repository.CustomerRepo.AddressRepo;
 import jakarta.transaction.Transactional;

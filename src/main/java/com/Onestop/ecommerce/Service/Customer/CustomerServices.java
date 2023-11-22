@@ -2,7 +2,7 @@ package com.Onestop.ecommerce.Service.Customer;
 
 import com.Onestop.ecommerce.Dto.CustomerDto.AddressResponse;
 import com.Onestop.ecommerce.Entity.Customer.Customer;
-import com.Onestop.ecommerce.Entity.cart.Cart;
+import com.Onestop.ecommerce.Entity.Customer.cart.Cart;
 import com.Onestop.ecommerce.Entity.user.userEntity;
 import com.Onestop.ecommerce.Exceptions.CustomerNotFoundException;
 import com.Onestop.ecommerce.Repository.CustomerRepo.CartRepo;

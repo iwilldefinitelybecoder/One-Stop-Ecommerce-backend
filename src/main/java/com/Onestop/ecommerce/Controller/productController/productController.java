@@ -1,21 +1,17 @@
 package com.Onestop.ecommerce.Controller.productController;
 
 import com.Onestop.ecommerce.Dto.productsDto.productsDto;
-import com.Onestop.ecommerce.Dto.productsDto.productsTagsDto;
 import com.Onestop.ecommerce.Dto.productsDto.resourceDetailsTdo;
 import com.Onestop.ecommerce.Entity.products.Product;
-
-import com.Onestop.ecommerce.Service.products.productsServices;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 
-import java.security.Principal;
 import java.util.List;
 
 
@@ -25,7 +21,7 @@ import java.util.List;
 public class productController {
 
     @Autowired
-    private productsServices ProductsServices;
+    private com.Onestop.ecommerce.Service.products.ProductsServices ProductsServices;
 
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(
@@ -36,8 +32,8 @@ public class productController {
             @RequestParam("regularPrice") double regularPrice,
             @RequestParam(value = "salePrice",required = false) double salePrice,
             @RequestParam("tags") List<String> tags,
-            @RequestParam("images") List<MultipartFile> images
-
+            @RequestParam("images") List<MultipartFile> images,
+            @RequestParam("wareHouseId")String wareHouseId
             ){
 
         for(String tag:tags) {
@@ -51,14 +47,15 @@ public class productController {
                 .regularPrice(regularPrice)
                 .salePrice(salePrice !=0?salePrice:0)
                 .productTypeTags(tags)
+                .wareHouseId(wareHouseId)
                 .build();
 
         var imagesDto = resourceDetailsTdo.builder()
                 .image(images)
                 .build();
 
-
-        String response1 = ProductsServices.saveProduct(request);
+        var userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        String response1 = ProductsServices.saveProduct(request,userName);
 
         String response3 = ProductsServices.saveImages(imagesDto, response1);
         log.info("response1 is {}",response1);

@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CartItemsRequest {
     private String productId;
-    private int quantity;
+    private Long quantity;
     private String cartId;
     private String cartItemId;
 }

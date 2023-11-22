@@ -2,7 +2,7 @@ package com.Onestop.ecommerce.Service.Customer;
 
 import com.Onestop.ecommerce.Dto.CustomerDto.CartItemsResponse;
 import com.Onestop.ecommerce.Dto.CustomerDto.ProductInfo;
-import com.Onestop.ecommerce.Entity.cart.Cart;
+import com.Onestop.ecommerce.Entity.Customer.cart.Cart;
 import com.Onestop.ecommerce.Entity.products.resourceDetails;
 import com.Onestop.ecommerce.Repository.CustomerRepo.CartItemsRepo;
 import com.Onestop.ecommerce.Repository.CustomerRepo.CartRepo;
@@ -56,6 +56,7 @@ public class CartServices implements CartService {
         List<ProductInfo> info = new ArrayList<>();
         cartItems.forEach(cartItem -> {
                     var product = cartItem.getProduct();
+                    
                     var productInfo = ProductInfo.builder()
                             .cartItemsId(cartItem.getIdentifier())
                             .productName(product.getName())

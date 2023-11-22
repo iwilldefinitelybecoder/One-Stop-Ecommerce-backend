@@ -2,8 +2,8 @@ package com.Onestop.ecommerce.Service.Customer;
 
 import com.Onestop.ecommerce.Dto.CustomerDto.CartItemsRequest;
 import com.Onestop.ecommerce.Entity.Customer.Customer;
-import com.Onestop.ecommerce.Entity.cart.Cart;
-import com.Onestop.ecommerce.Entity.cart.Items;
+import com.Onestop.ecommerce.Entity.Customer.cart.Cart;
+import com.Onestop.ecommerce.Entity.Customer.cart.Items;
 import com.Onestop.ecommerce.Repository.CustomerRepo.CartItemsRepo;
 import com.Onestop.ecommerce.Repository.CustomerRepo.CartRepo;
 import com.Onestop.ecommerce.Repository.products.productsRepo;

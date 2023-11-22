@@ -9,10 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Array;
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 @Service
@@ -32,7 +31,11 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails){
-       return generateToken(new HashMap<>(), userDetails);
+        Map<String, Object> claims = new HashMap<>();
+        List<String> roles = new ArrayList<>();
+        userDetails.getAuthorities().forEach(authority -> roles.add(authority.getAuthority()));
+        claims.put("role", roles);
+         return generateToken(claims, userDetails);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails){
@@ -44,6 +47,10 @@ public class JwtService {
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 24))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public Object extractRoles(String token){
+        return extractAllClaims(token).get("role");
     }
 
     public Boolean isTokenvalid(String token, UserDetails userDetails){

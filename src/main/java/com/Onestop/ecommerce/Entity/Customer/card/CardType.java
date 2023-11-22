@@ -1,4 +1,4 @@
-package com.Onestop.ecommerce.Entity.card;
+package com.Onestop.ecommerce.Entity.Customer.card;
 
 public enum CardType {
     VISA,

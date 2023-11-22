@@ -1,4 +1,4 @@
-package com.Onestop.ecommerce.Entity.cart;
+package com.Onestop.ecommerce.Entity.Customer.cart;
 
 
 

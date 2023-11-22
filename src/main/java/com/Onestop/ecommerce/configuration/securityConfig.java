@@ -39,6 +39,7 @@ public class securityConfig{
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/user/getprofileicon/**").permitAll()
                         .requestMatchers("/api/v1/product/**").permitAll()
+                        .requestMatchers("/api/v1/logistic/**").hasAuthority("ADMIN")
                         .anyRequest().permitAll()
                 )
 //

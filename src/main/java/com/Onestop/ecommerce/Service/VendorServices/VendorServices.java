@@ -29,11 +29,10 @@ public class VendorServices {
         }
         var vendor  = Vendor.builder()
                 .user(user)
-                .email(request.getVendorEmail())
+                .supportEmail(request.getVendorEmail())
                 .vendorCompanyName(request.getVendorCompanyName())
                 .build();
         vendorRepository.save(vendor);
-//        user.setRole(Role.VENDOR);
         var addrole = user.getRoles();
         addrole.add(role);
         user.setRoles(addrole);

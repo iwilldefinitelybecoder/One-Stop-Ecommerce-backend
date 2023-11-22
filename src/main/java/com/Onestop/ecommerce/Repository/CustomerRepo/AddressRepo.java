@@ -1,6 +1,6 @@
 package com.Onestop.ecommerce.Repository.CustomerRepo;
 
-import com.Onestop.ecommerce.Entity.address.Address;
+import com.Onestop.ecommerce.Entity.Customer.address.Address;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

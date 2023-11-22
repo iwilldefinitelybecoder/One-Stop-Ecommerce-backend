@@ -1,6 +1,8 @@
 package com.Onestop.ecommerce.Entity.products;
 
 
+import com.Onestop.ecommerce.Entity.Logistics.ProductInventory;
+import com.Onestop.ecommerce.Entity.Logistics.WareHouse;
 import com.Onestop.ecommerce.Entity.user.userEntity;
 import com.Onestop.ecommerce.Entity.vendor.Vendor;
 import jakarta.persistence.*;
@@ -20,19 +22,24 @@ import java.util.List;
 @Table(name = "products",indexes = @Index(name = "identifier_index",columnList = "identifier,id",unique = true))
 public class Product {
 
-     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-     private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private String name;
     private String description;
     private String category;
     private int stock;
     private double regularPrice;
     private double salePrice = 0;
-    private String identifier;
+    private boolean enabled = false;
+    private boolean published = false;
 
     @ManyToOne(fetch = FetchType.EAGER)
+    private WareHouse wareHouse;
+    private String identifier;
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "vendor_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FK_vendor_id"))
-    private userEntity user;
+    private Vendor vendor;
     @ElementCollection
     private List<String>productTypeTags;
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)

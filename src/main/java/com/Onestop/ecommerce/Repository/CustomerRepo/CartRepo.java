@@ -1,6 +1,6 @@
 package com.Onestop.ecommerce.Repository.CustomerRepo;
 
-import com.Onestop.ecommerce.Entity.cart.Cart;
+import com.Onestop.ecommerce.Entity.Customer.cart.Cart;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

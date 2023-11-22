@@ -1,11 +1,13 @@
 package com.Onestop.ecommerce.Service.products;
 
 import com.Onestop.ecommerce.Dto.productsDto.productsDto;
-import com.Onestop.ecommerce.Dto.productsDto.productsTagsDto;
 import com.Onestop.ecommerce.Dto.productsDto.resourceDetailsTdo;
+import com.Onestop.ecommerce.Entity.Logistics.WareHouse;
 import com.Onestop.ecommerce.Entity.products.Product;
-import com.Onestop.ecommerce.Entity.products.productTypeTags;
 import com.Onestop.ecommerce.Entity.products.resourceDetails;
+import com.Onestop.ecommerce.Entity.vendor.Vendor;
+import com.Onestop.ecommerce.Repository.LogisticsRepo.WareHouseRepo;
+import com.Onestop.ecommerce.Repository.VendorRepo.VendorRepository;
 import com.Onestop.ecommerce.Repository.products.productsRepo;
 import com.Onestop.ecommerce.Repository.products.resourceRepo;
 import com.Onestop.ecommerce.Repository.products.tagsRepo;
@@ -26,7 +28,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @Transactional
-public class productsServices implements productServices {
+public class ProductsServices implements productServices {
 
 
     @Autowired
@@ -38,14 +40,26 @@ public class productsServices implements productServices {
     @Autowired
     private tagsRepo tagsRepo;
 
+    @Autowired
+    VendorRepository vendorRepo;
 
+    @Autowired
+    WareHouseRepo wareHouseRepo;
+
+    private Vendor getVendor(String email){
+        return vendorRepo.findByUserEmail(email).orElseThrow(()-> new RuntimeException("vendor not found"));
+    }
     @Override
-    public String saveProduct(productsDto request) {
+    public String saveProduct(productsDto request,String email) {
+        var vendor = getVendor(email);
+        WareHouse wareHouse = wareHouseRepo.findByIdentifier(request.getWareHouseId()).orElseThrow(()->{throw new RuntimeException("No warehouse exists");});
         var product = Product.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .category(request.getCategory())
                 .stock(request.getStock())
+                .vendor(vendor)
+                .wareHouse(wareHouse)
                 .regularPrice(request.getRegularPrice())
                 .productTypeTags(request.getProductTypeTags())
                 .salePrice(request.getSalePrice() !=0?request.getSalePrice():0)

@@ -12,7 +12,7 @@ import java.util.List;
 public interface productServices {
 
 
-    String saveProduct(productsDto request);
+    String saveProduct(productsDto request,String email);
 
 
 

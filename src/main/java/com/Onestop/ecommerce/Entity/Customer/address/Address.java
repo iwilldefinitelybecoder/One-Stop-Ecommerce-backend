@@ -1,8 +1,7 @@
-package com.Onestop.ecommerce.Entity.address;
+package com.Onestop.ecommerce.Entity.Customer.address;
 
 
 import com.Onestop.ecommerce.Entity.Customer.Customer;
-import com.Onestop.ecommerce.Entity.user.userEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

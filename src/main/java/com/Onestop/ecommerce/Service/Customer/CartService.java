@@ -1,8 +1,7 @@
 package com.Onestop.ecommerce.Service.Customer;
 
 import com.Onestop.ecommerce.Dto.CustomerDto.CartItemsResponse;
-import com.Onestop.ecommerce.Entity.Customer.Customer;
-import com.Onestop.ecommerce.Entity.cart.Cart;
+import com.Onestop.ecommerce.Entity.Customer.cart.Cart;
 
 public interface CartService {
     Cart getCartByUserEmail(String email);

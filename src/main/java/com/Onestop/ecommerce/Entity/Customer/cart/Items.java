@@ -1,6 +1,7 @@
-package com.Onestop.ecommerce.Entity.cart;
+package com.Onestop.ecommerce.Entity.Customer.cart;
 
 import com.Onestop.ecommerce.Entity.products.Product;
+import com.Onestop.ecommerce.Entity.products.ProductAvaiablity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,9 +26,11 @@ public class Items {
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
-    private int quantity;
+    private Long quantity;
     private String identifier;
     private double totalPrice;
+
+    private ProductAvaiablity status;
 
 
     @PrePersist

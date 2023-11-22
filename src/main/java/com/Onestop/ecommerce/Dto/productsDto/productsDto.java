@@ -20,5 +20,6 @@ public class productsDto {
     private double regularPrice;
     private List<String> productTypeTags;
     private double salePrice;
+    private String wareHouseId;
 
 }

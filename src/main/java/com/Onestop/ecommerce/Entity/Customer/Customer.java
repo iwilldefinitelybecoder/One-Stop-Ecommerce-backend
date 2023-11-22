@@ -1,8 +1,9 @@
 package com.Onestop.ecommerce.Entity.Customer;
 
-import com.Onestop.ecommerce.Entity.address.Address;
-import com.Onestop.ecommerce.Entity.card.CardInfo;
-import com.Onestop.ecommerce.Entity.cart.Cart;
+import com.Onestop.ecommerce.Entity.Customer.address.Address;
+import com.Onestop.ecommerce.Entity.Customer.card.Cards;
+import com.Onestop.ecommerce.Entity.Customer.cart.Cart;
+import com.Onestop.ecommerce.Entity.orders.Orders;
 import com.Onestop.ecommerce.Entity.user.userEntity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
@@ -32,11 +33,15 @@ public class Customer implements Serializable {
     private Collection<Address> address = new ArrayList<>();
 
     @OneToMany( cascade = CascadeType.ALL)
-    private Collection<CardInfo> paymentCards = new ArrayList<>();
+    private Collection<Cards> paymentCards = new ArrayList<>();
 
     @OneToOne
     @JoinColumn(name = "user_id")
     private userEntity user;
+
+    @OneToMany
+    @JoinColumn(name = "order_id")
+    private Collection<Orders> orders = new ArrayList<>();
 
     @JsonIgnoreProperties("customer")
     @OneToOne(cascade = CascadeType.ALL,mappedBy = "customer")
