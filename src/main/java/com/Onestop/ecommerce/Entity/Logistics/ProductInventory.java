@@ -21,6 +21,7 @@ import java.util.UUID;
 @Table(name = "inventory")
 public class ProductInventory {
     @Id
+    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long Id;
 
@@ -38,7 +39,7 @@ public class ProductInventory {
 
     private Date inDate;
 
-    private Long Stock;
+    private Integer Stock;
     private String identifier;
 
     @PrePersist

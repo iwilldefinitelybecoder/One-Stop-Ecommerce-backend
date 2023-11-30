@@ -26,6 +26,7 @@ import java.util.UUID;
 @Table(name = "orders")
 public class Orders {
     @Id
+    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long Id;
 
@@ -34,6 +35,7 @@ public class Orders {
     private Customer customer;
 
     private String trackingId;
+    @Enumerated(EnumType.STRING)
     private OrderStatus status;
     private String generatedOrderId;
 
@@ -49,20 +51,19 @@ public class Orders {
     @JoinColumn(name = "shipping_address_id")
     private Address shippingAddress;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "billing_address_id")
     private Address billingAddress;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "order_items_id")
     private Collection<OrderItems> orderItems = new ArrayList<>();
 
 
-    @Transient
+
     @OneToOne
     @JoinColumn(name = "payment_id")
     private Cards paymentCard;
-
+    @Enumerated(EnumType.STRING)
     private PaymentMethods paymentMethod;
     private String identifier;
     private boolean returnable = true;
@@ -79,7 +80,7 @@ public class Orders {
     private Date orderDate;
 
     @ManyToOne
-    @JoinColumn(name = "ware_house_id")
+    @JoinColumn(name = "ware_house_id",unique = false)
     private WareHouse wareHouse;
 
     @Transient
@@ -93,6 +94,7 @@ public class Orders {
             this.identifier = UUID.randomUUID().toString();
         }
         orderSummary();
+        this.generatedOrderId = generateOrderId(this.Id);
     }
 
     @PreUpdate
@@ -116,5 +118,9 @@ public class Orders {
         this.grandTotal = (long) (total + shippingTotal + taxTotal);
     }
 
-    // Getters and setters
+    private String generateOrderId(Long orderId) {
+        String prefix = "ONES-TP";
+        return prefix + orderId;
+    }
+
 }

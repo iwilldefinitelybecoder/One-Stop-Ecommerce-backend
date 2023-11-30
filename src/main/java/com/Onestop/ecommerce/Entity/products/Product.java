@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Data
@@ -28,11 +29,12 @@ public class Product {
     private String name;
     private String description;
     private String category;
-    private int stock;
+    private Integer stock;
     private double regularPrice;
     private double salePrice = 0;
     private boolean enabled = false;
     private boolean published = false;
+    private double averageRating;
 
     @ManyToOne(fetch = FetchType.EAGER)
     private WareHouse wareHouse;
@@ -40,10 +42,21 @@ public class Product {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "vendor_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FK_vendor_id"))
     private Vendor vendor;
+    @OneToOne
+    private resourceDetails thumbnail;
     @ElementCollection
     private List<String>productTypeTags;
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<resourceDetails> images = new ArrayList<>();
+
+    @OneToMany
+    private Collection<Review> reviews = new ArrayList<>();
+    private String extraAttributesId;
+
+  @OneToOne(mappedBy = "product", cascade = CascadeType.ALL)
+    private ProductInventory productInventory;
+
+
 
 
     @PrePersist
@@ -51,5 +64,19 @@ public class Product {
         if (this.identifier == null) {
             this.identifier = java.util.UUID.randomUUID().toString();
         }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+       AverageRating();
+    }
+    private void AverageRating() {
+        List<Review> reviews = (List<Review>) this.getReviews();;
+        if (reviews.isEmpty()) {
+            this.averageRating = 0.0;
+        }
+
+        double totalRating = reviews.stream().mapToInt(Review::getRating).sum();
+        this.averageRating =  totalRating / reviews.size();
     }
 }

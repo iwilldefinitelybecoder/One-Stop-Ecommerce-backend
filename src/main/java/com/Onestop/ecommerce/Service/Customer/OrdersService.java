@@ -1,15 +1,16 @@
 package com.Onestop.ecommerce.Service.Customer;
 
 
+import com.Onestop.ecommerce.Dto.CustomerDto.Orders.OrderCancelRequest;
 import com.Onestop.ecommerce.Dto.CustomerDto.Orders.OrderDetailResponse;
 import com.Onestop.ecommerce.Dto.CustomerDto.Orders.OrderRequest;
-import com.Onestop.ecommerce.Dto.CustomerDto.Orders.OrderResponse;
+
 
 import java.util.List;
 
 public interface OrdersService {
   String createOrder(OrderRequest orderRequest);
-  OrderResponse getOrder(String orderId);
-  String cancelOrder(String orderId);
+  OrderDetailResponse getOrder(String orderId);
+  String cancelOrder(OrderCancelRequest request);
   List<OrderDetailResponse> getAllOrders(String customerId);
 }

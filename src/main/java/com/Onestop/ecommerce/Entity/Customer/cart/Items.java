@@ -26,7 +26,7 @@ public class Items {
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
-    private Long quantity;
+    private Integer quantity;
     private String identifier;
     private double totalPrice;
 

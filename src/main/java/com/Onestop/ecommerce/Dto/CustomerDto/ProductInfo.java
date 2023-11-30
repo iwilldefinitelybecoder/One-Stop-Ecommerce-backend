@@ -12,7 +12,9 @@ public class ProductInfo {
     private Double regularPrice;
     private String productName;
     private Double salePrice;
-    private Long productQuantity;
+    private Integer productQuantity;
     private Double productTotal;
     private List<String> productImageURL;
+    private String productId;
+
 }

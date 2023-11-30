@@ -22,7 +22,6 @@ import java.util.UUID;
 public class Cards {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "card_id")
     private Long Id;
 
     private String identifier;

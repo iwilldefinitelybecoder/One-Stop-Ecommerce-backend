@@ -20,36 +20,30 @@ public class ECommerceApplication {
 		SpringApplication.run(ECommerceApplication.class, args);
 	}
 
-	@Autowired
-	private AuthenticateService authenticateService;
+//	@Autowired
+//	private AuthenticateService authenticateService;
+//	@Autowired
+//	private WareHouseRepo wareHouseRepo;
 //	@Bean
 //	CommandLineRunner runner(){
 //		authenticateService.addRoles("ADMIN");
 //		authenticateService.addRoles("USER");
 //		authenticateService.addRoles("VENDOR");
+//		var wareHouse = WareHouse.builder()
+//				.wareHouseLocation("bangalore")
+//				.wareHouseName("bangalore")
+//				.contactNumber(8315485645L)
+//				.inventory(new ArrayList<>())
+//				.capacity(1000L)
+//				.build();
+//		wareHouseRepo.save(wareHouse);
 //		return args -> {
 //			System.out.println("Application started");
 //		};}
 
 
-//	@Autowired
-//	private WareHouseRepo wareHouseRepo;
-//@Bean
-//	CommandLineRunner runner(){
-//	var wareHouse = WareHouse.builder()
-//			.wareHouseLocation("bangalore")
-//			.wareHouseName("bangalore")
-//			.contactNumber(8315485645L)
-//			.productInventory(new ArrayList<>())
-//			.productInventory(new ArrayList<>())
-//			.capacity(1000L)
-//			.build();
-//	wareHouseRepo.save(wareHouse);
-//
-//
-//		return args -> {
-//			System.out.println("Application started");
-//		};}
+
+
 
 
 }

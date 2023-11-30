@@ -20,8 +20,9 @@ import lombok.NoArgsConstructor;
 public class OrderItems {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int orderItemId;
-
+    private Long Id;
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
 
     @ManyToOne
     @JoinColumn(name = "product_id")
@@ -29,14 +30,15 @@ public class OrderItems {
 
     private String identifier;
 
-    private Long quantity;
+    private Integer quantity;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "vendor_id")
     private Vendor vendor;
 
     private Double itemTotal;
     private Double itemPrice;
+
 
 
     @PrePersist

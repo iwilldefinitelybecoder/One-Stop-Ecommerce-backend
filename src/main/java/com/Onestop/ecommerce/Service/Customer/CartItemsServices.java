@@ -37,7 +37,7 @@ public class CartItemsServices implements CartItemsService{
         var cart = customer.getCart();
         var cartItems = cart.getItems();
         var cartItem = cartItemsRepo.findByProductIdentifier(cartItemsRequest.getProductId()).orElse(null);
-        log.info("cartItem: {}", cartItemsRequest.getProductId());
+
         if(cartItem == null){
             var cartItem1 = Items.builder()
                    .cart(cart)

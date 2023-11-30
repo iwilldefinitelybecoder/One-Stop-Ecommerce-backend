@@ -19,7 +19,7 @@ import java.util.List;
 public class OrderDetailResponse {
     private String orderId;
     private List<ProductListOfOrder>  productId;
-    private Long quantity;
+
     private Date orderDate;
     private OrderStatus orderStatus;
     private String paymentId;
@@ -32,6 +32,7 @@ public class OrderDetailResponse {
     private PaymentMethods paymentMethod;
     private boolean paymentStatus;
     private OrderSummary orderSummary;
+    private String generatedOrderId;
 
 }
 

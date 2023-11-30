@@ -1,4 +1,4 @@
-package com.Onestop.ecommerce.Repository.CustomerRepo;
+package com.Onestop.ecommerce.Repository.CustomerRepo.OrdersRepo;
 
 import com.Onestop.ecommerce.Entity.orders.Orders;
 import org.springframework.data.jpa.repository.JpaRepository;

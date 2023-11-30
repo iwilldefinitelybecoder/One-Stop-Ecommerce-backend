@@ -1,5 +1,7 @@
 package com.Onestop.ecommerce.Controller.productController;
 
+import com.Onestop.ecommerce.Dto.productsDto.ProductResponse;
+import com.Onestop.ecommerce.Dto.productsDto.ReviewRequest;
 import com.Onestop.ecommerce.Dto.productsDto.productsDto;
 import com.Onestop.ecommerce.Dto.productsDto.resourceDetailsTdo;
 import com.Onestop.ecommerce.Entity.products.Product;
@@ -13,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -25,45 +28,24 @@ public class productController {
 
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(
-            @RequestParam("name") String name,
-            @RequestParam("description") String description,
-            @RequestParam("category") String category,
-            @RequestParam("stock") int stock,
-            @RequestParam("regularPrice") double regularPrice,
-            @RequestParam(value = "salePrice",required = false) double salePrice,
-            @RequestParam("tags") List<String> tags,
-            @RequestParam("images") List<MultipartFile> images,
-            @RequestParam("wareHouseId")String wareHouseId
+            @ModelAttribute productsDto request,
+            @RequestParam(value = "images",required = false) List<MultipartFile> images
             ){
 
-        for(String tag:tags) {
-            System.out.println(tag);
-        };
-        var request = productsDto.builder()
-                .name(name)
-                .description(description)
-                .category(category)
-                .stock(stock)
-                .regularPrice(regularPrice)
-                .salePrice(salePrice !=0?salePrice:0)
-                .productTypeTags(tags)
-                .wareHouseId(wareHouseId)
-                .build();
 
-        var imagesDto = resourceDetailsTdo.builder()
-                .image(images)
-                .build();
+
 
         var userName = SecurityContextHolder.getContext().getAuthentication().getName();
-        String response1 = ProductsServices.saveProduct(request,userName);
+        var images1 = resourceDetailsTdo.builder()
+                .image(images)
+                .build();
+        String response1 = ProductsServices.saveProduct(request,images1,userName);
 
-        String response3 = ProductsServices.saveImages(imagesDto, response1);
-        log.info("response1 is {}",response1);
-        log.info("response3 is {}",response3);
-        if(response1!=null && response3.equals("success")) {
-            return ResponseEntity.status(200).body("success");
-        } else {
-            return ResponseEntity.status(500).body("errorrrr");
+      try
+        {
+            return ResponseEntity.status(200).body(response1);
+        }catch (Exception e){
+            return ResponseEntity.status(500).body(e.getMessage());
         }
 
 
@@ -73,11 +55,68 @@ public class productController {
 
 
     }
- @GetMapping("/getproducts/{}")
+ @GetMapping("/getproducts")
     public ResponseEntity<?> getProducts() {
         try{
-            List<Product> products = ProductsServices.getProducts();
+            List<ProductResponse> products = ProductsServices.getProducts();
             return ResponseEntity.status(200).body(products);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchProducts(@RequestParam(value = "keyword",required = false) String keyword
+                                            ,@RequestParam(value = "category",required = false) String category) {
+        try{
+            List<String> products = ProductsServices.searchProducts(keyword,category);
+            return ResponseEntity.status(200).body(products);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+
+    }
+
+    @GetMapping("/search-results")
+    public ResponseEntity<?> searchResults(@RequestParam(value = "keyword",required = false) String keyword
+                                            ,@RequestParam(value = "category",required = false) String category) {
+        try{
+            List<Product> products = ProductsServices.searchResults(keyword,category);
+            return ResponseEntity.status(200).body(products);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+
+    }
+
+    @GetMapping("/allProductReviews")
+    public ResponseEntity<?> getAllProductReviews(@RequestParam(value = "productId") String productId) {
+        try{
+            List<ReviewRequest> products = ProductsServices.getAllProductReviews(productId);
+            return ResponseEntity.status(200).body(products);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+
+    }
+
+    @PostMapping("/addReview")
+    public ResponseEntity<?> addReview(@RequestBody ReviewRequest request) {
+        try{
+            String response = ProductsServices.addReview(request);
+            return ResponseEntity.status(200).body(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+
+    }
+
+    @GetMapping("/product/attributes")
+    public ResponseEntity<?> getProductAttributes(@RequestParam(value = "attribute") String attribute) {
+        try{
+            List<Product> response = ProductsServices.getProductAttributes(attribute);
+            return ResponseEntity.status(200).body(response);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }

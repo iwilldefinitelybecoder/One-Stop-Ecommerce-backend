@@ -10,7 +10,7 @@ public interface WareHouseService {
     String updateWareHouse(WareHouseRequest wareHouseRequest, String username);
     String deleteWareHouse(String wareHouseId, String username);
     WarehouseResponse getWareHouse(String wareHouseId, String username);
-    List<WarehouseResponse> getAllWareHouse(String username);
+    List<WarehouseResponse> getAllWareHouse();
 
 
 }
