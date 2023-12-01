@@ -42,10 +42,16 @@ public class AuthController {
             @RequestBody RegisterRequest request,HttpServletRequest servletRequest) {
 
         var response = services.register(request);
-         var user = services.getUser(request.getEmail());
-        eventPublisher.publishEvent(new VerifyTokenEmmitter(user, applicationUrl(servletRequest)));
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+        var user = services.getUser(request.getEmail());
+        try {
+            eventPublisher.publishEvent(new VerifyTokenEmmitter(user, applicationUrl(servletRequest)));
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+        }
+
+
 
 
 

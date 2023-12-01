@@ -63,6 +63,7 @@ public class CartServices implements CartService {
                             .regularPrice(product.getRegularPrice())
                             .salePrice(product.getSalePrice())
                             .productQuantity(cartItem.getQuantity())
+                            .productId(product.getIdentifier())
                             .productImageURL(parseImageURL(product.getImages()))
                             .productTotal(cartItem.getTotalPrice())
                             .build();
@@ -72,6 +73,7 @@ public class CartServices implements CartService {
                 .cartTotal(cart.getCartTotal())
                 .totalItems(cartItems.size())
                 .productInfo(info)
+
                 .cartId(cart.getIdentifier())
                 .build();
         };

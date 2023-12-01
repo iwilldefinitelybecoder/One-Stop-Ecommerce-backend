@@ -1,9 +1,13 @@
 package com.Onestop.ecommerce.Service.Customer;
 
+import com.Onestop.ecommerce.Dto.CustomerDto.CartItemResponse;
 import com.Onestop.ecommerce.Dto.CustomerDto.CartItemsRequest;
+import com.Onestop.ecommerce.Dto.CustomerDto.CartItemsResponse;
+import com.Onestop.ecommerce.Dto.CustomerDto.ProductInfo;
 import com.Onestop.ecommerce.Entity.Customer.Customer;
 import com.Onestop.ecommerce.Entity.Customer.cart.Cart;
 import com.Onestop.ecommerce.Entity.Customer.cart.Items;
+import com.Onestop.ecommerce.Entity.products.resourceDetails;
 import com.Onestop.ecommerce.Repository.CustomerRepo.CartItemsRepo;
 import com.Onestop.ecommerce.Repository.CustomerRepo.CartRepo;
 import com.Onestop.ecommerce.Repository.products.productsRepo;
@@ -12,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -31,7 +37,7 @@ public class CartItemsServices implements CartItemsService{
     }
     @Override
     @Transactional
-    public String addProductToCart(String email, CartItemsRequest cartItemsRequest) {
+    public ProductInfo addProductToCart(String email, CartItemsRequest cartItemsRequest) {
         var customer = getCartByCustomer(email);
         var product = productRepo.findByIdentifier(cartItemsRequest.getProductId()).orElseThrow(() -> new RuntimeException("Product not found"));
         var cart = customer.getCart();
@@ -49,9 +55,21 @@ public class CartItemsServices implements CartItemsService{
             cart.setItems(cartItems);
             cartRepo.save(updateCartTotal(cart));
             cartItemsRepo.save(cartItem1);
-            return "Product added to cart successfully";
+            log.info(product.getIdentifier());
+            return ProductInfo.builder()
+                    .productName(product.getName())
+                    .productImageURL(parseImageURL(product.getImages()))
+                    .salePrice(product.getSalePrice())
+                    .productQuantity(cartItem1.getQuantity())
+                    .regularPrice(product.getRegularPrice())
+                    .productTotal(cartItem1.getTotalPrice())
+                    .productId(product.getIdentifier())
+                    .cartItemsId(cartItem1.getIdentifier())
+                    .build();
+
+
         }
-      return "PRODUCT_EXISTS";
+      throw new RuntimeException("Product already in cart");
     }
 
     private Cart updateCartTotal(Cart cart){
@@ -80,13 +98,22 @@ public class CartItemsServices implements CartItemsService{
 
     @Override
     @Transactional
-    public String updateProductQuantity(String email, CartItemsRequest cartItemsRequest) {
+    public ProductInfo updateProductQuantity(String email, CartItemsRequest cartItemsRequest) {
         var cartItem = cartItemsRepo.findByIdentifier(cartItemsRequest.getCartItemId()).orElseThrow(() -> new RuntimeException("Cart item not found"));
         cartItem.setQuantity(cartItemsRequest.getQuantity());
         cartItem.setTotalPrice(cartItem.getQuantity() * cartItem.getProduct().getSalePrice());
         cartItemsRepo.save(cartItem);
         updateItemTotal(email);
-        return "Product quantity updated successfully";
+        return ProductInfo.builder()
+                .productName(cartItem.getProduct().getName())
+                .productImageURL(parseImageURL(cartItem.getProduct().getImages()))
+                .salePrice(cartItem.getProduct().getSalePrice())
+                .productQuantity(cartItem.getQuantity())
+                .regularPrice(cartItem.getProduct().getRegularPrice())
+                .productTotal(cartItem.getTotalPrice())
+                .productId(cartItem.getProduct().getIdentifier())
+                .cartItemsId(cartItem.getIdentifier())
+                .build();
     }
 
     private void updateItemTotal(String email){
@@ -100,4 +127,13 @@ public class CartItemsServices implements CartItemsService{
         cart.setCartTotal(cartTotal);
         cartRepo.save(cart);
     }
+    private List<String> parseImageURL(List<resourceDetails> images){
+        List<String> imageURL = new ArrayList<>();
+        images.forEach(image -> {
+            var url = "http://localhost:8000/image-resources/product-Images/" + image.getUrl();
+            imageURL.add(url);
+        });
+        return imageURL;
+    }
 }
+
