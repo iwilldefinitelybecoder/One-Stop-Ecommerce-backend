@@ -25,10 +25,12 @@ public class AddressServices implements AddressService {
             var address = Address.builder()
                     .city(request.getCity())
                     .country(request.getCountry())
-                    .state(request.getState())
-                    .street(request.getStreet())
+                    .number(request.getNumber())
+                    .area(request.getArea())
+                    .locality(request.getLocality())
+                    .name(request.getName())
+                    .email(request.getEmail())
                     .zipCode(request.getZipCode())
-                    .address(request.getAddress())
                     .customer(customer)
                     .build();
             addressRepo.save(address);
@@ -45,11 +47,14 @@ public class AddressServices implements AddressService {
         var address = addressRepo.findByIdentifier(identifier).orElseThrow(() -> new AddressNotFoundException("Address not found"));
 
         return AddressResponse.builder()
-                .identifier(address.getIdentifier())
+                .addressId(address.getIdentifier())
                 .city(address.getCity())
                 .country(address.getCountry())
-                .state(address.getState())
-                .street(address.getStreet())
+                .number(address.getNumber())
+                .locality(address.getLocality())
+                .name(address.getName())
+                .email(address.getEmail())
+                .area(address.getArea())
                 .zipCode(address.getZipCode())
                 .build();
     }
@@ -59,10 +64,13 @@ public class AddressServices implements AddressService {
         var address = addressRepo.findByIdentifier(identifier).orElseThrow(() -> new AddressNotFoundException("Address not found"));
         address.setCity(request.getCity());
         address.setCountry(request.getCountry());
-        address.setState(request.getState());
-        address.setStreet(request.getStreet());
+        address.setName(request.getName());
+        address.setArea(request.getArea());
+        address.setLocality(request.getLocality());
+        address.setNumber(request.getNumber());
+        address.setEmail(request.getEmail());
         address.setZipCode(request.getZipCode());
-        address.setAddress(request.getAddress());
+
         addressRepo.save(address);
         return "Address updated successfully";
     }

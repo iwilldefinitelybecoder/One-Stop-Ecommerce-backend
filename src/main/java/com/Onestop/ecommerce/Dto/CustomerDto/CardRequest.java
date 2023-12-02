@@ -15,7 +15,7 @@ import java.time.LocalDate;
 public class CardRequest {
     private String cardNumber;
     private String cardHolderName;
-    private LocalDate expireDate;
+    private String expireDate;
     private CardType cardType;
     private String cvc;
     private String cardId;

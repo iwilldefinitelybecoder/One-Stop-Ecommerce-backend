@@ -10,10 +10,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AddressRequest {
-    private String address;
+    private String name;
+    private String email;
+    private Long    number;
     private String city;
-    private String state;
     private String country;
-    private String zipCode;
-    private String street;
+    private int zipCode;
+    private String area;
+    private String locality;
 }

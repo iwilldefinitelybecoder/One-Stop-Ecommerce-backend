@@ -60,12 +60,14 @@ public class CustomerServices {
      List<AddressResponse> responses = new ArrayList<>();
         customer.getAddress().forEach(address -> {
             var response = AddressResponse.builder()
-                    .identifier(address.getIdentifier())
+                    .addressId(address.getIdentifier())
                     .city(address.getCity())
-                    .address(address.getAddress())
                     .country(address.getCountry())
-                    .state(address.getState())
-                    .street(address.getStreet())
+                    .number(address.getNumber())
+                    .locality(address.getLocality())
+                    .name(address.getName())
+                    .email(address.getEmail())
+                    .area(address.getArea())
                     .zipCode(address.getZipCode())
                     .build();
             responses.add(response);

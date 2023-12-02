@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +29,7 @@ public class CardServices implements CardService {
     @Override
     public List<CardResponse> getCards(String email) {
         Customer customer = getCustomer(email);
+        log.info(email);
         var cards = customer.getPaymentCards();
         List<CardResponse> customerCards= new ArrayList<>();
         cards.forEach(card -> {
@@ -35,7 +38,7 @@ public class CardServices implements CardService {
                     .cardNumber( ("**** **** **** " + card.getNumber().toString().substring(12)))
                     .cardHolderName(card.getName())
                     .cardType(card.getType())
-                    .expireDate(card.getExpireDate())
+                    .expireDate(formatToDateString((card.getExpireDate())))
                     .defaultCard(card.getIsDefault())
                     .build();
             customerCards.add(response);
@@ -57,7 +60,7 @@ public class CardServices implements CardService {
         var newCard = Cards.builder()
                 .number(CheckIfCardExists(cardNumber))
                 .name(cardRequest.getCardHolderName())
-                .expireDate(cardRequest.getExpireDate())
+                .expireDate(formatToLocalDate(cardRequest.getExpireDate()))
                 .cvc(cardRequest.getCvc())
                 .type(cardRequest.getCardType())
                 .customer(customer)
@@ -70,12 +73,22 @@ public class CardServices implements CardService {
         return "Card added successfully";
     }
 
+    private LocalDate formatToLocalDate(String date){
+        String year = date.substring(3,5);
+        String month = date.substring(0,2);
+        int parsedYear = Integer.parseInt("20" + year);
+        int parsedMonth = Integer.parseInt(month);
+        int parsedDay = 1;
+        return LocalDate.of(parsedYear, parsedMonth, parsedDay);
+    }
+
     private Long CheckIfCardExists(Long cardNumber){
         if(cardsRepo.findByNumber(cardNumber).isPresent()){
             throw new RuntimeException("Card already exists");
         }
         return cardNumber;
     }
+
 
     @Override
     @Transactional
@@ -101,7 +114,7 @@ public class CardServices implements CardService {
         }
         card.setName(cardRequest.getCardHolderName());
         card.setNumber(Long.parseLong(cardRequest.getCardNumber().replaceAll("\\s+","")));
-        card.setExpireDate(cardRequest.getExpireDate());
+        card.setExpireDate(formatToLocalDate(cardRequest.getExpireDate()));
         card.setCvc(cardRequest.getCvc());
         card.setType(cardRequest.getCardType());
         cardsRepo.save(card);
@@ -134,11 +147,14 @@ var card = cardsRepo.findByIdentifier(cardId).orElse(null);
         }
         return CardResponse.builder()
                 .cardId(card.getIdentifier())
-                .cardNumber( ("**** **** **** " + card.getNumber().toString().substring(12)))
+                .cardNumber( (card.getNumber().toString().replaceAll("(.{4})", "$1 ")))
                 .cardHolderName(card.getName())
                 .cardType(card.getType())
-                .expireDate(card.getExpireDate())
+                .expireDate(formatToDateString(card.getExpireDate()))
                 .defaultCard(card.getIsDefault())
                 .build();
+    }
+    private String formatToDateString(LocalDate localDate) {
+        return localDate.format(DateTimeFormatter.ofPattern("MM/yy"));
     }
 }

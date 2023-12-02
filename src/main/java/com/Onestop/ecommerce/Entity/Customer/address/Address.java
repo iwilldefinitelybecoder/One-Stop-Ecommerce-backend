@@ -27,19 +27,21 @@ import java.util.UUID;
         private Customer customer;
 
         @Column(length = 300)
-        private String address;
+        private String locality;
+
+        private String name;
+        private String email;
+        private Long number;
 
         @Column(length = 300)
         private String city;
 
-        @Column(length = 50)
-        private String state;
 
         @Column(name = "street", length = 300)
-        private String street;
+        private String area;
 
         @Column(name = "zip_code", length = 10)
-        private String zipCode;
+        private int zipCode;
 
         @Column(length = 20)
         private String country;
