@@ -31,4 +31,7 @@ public interface productServices {
     List<ReviewRequest> getAllProductReviews(String productId);
 
     List<Product> getProductAttributes(String attribute);
+    String deleteProduct(String productId);
+    ProductResponse getProductById(String productId);
+    ProductResponse updateProduct(ProductRequest request, String productId);
 }

@@ -1,5 +1,6 @@
 package com.Onestop.ecommerce.Service.products;
 
+import com.Onestop.ecommerce.Controller.productController.ProductRequest;
 import com.Onestop.ecommerce.Dto.productsDto.ProductResponse;
 import com.Onestop.ecommerce.Dto.productsDto.ReviewRequest;
 import com.Onestop.ecommerce.Dto.productsDto.productsDto;
@@ -164,6 +165,7 @@ public class ProductsServices implements productServices {
     public List<ProductResponse> getProducts() {
         List<ProductResponse> products = new ArrayList<>();
         productsRepo.findAll().forEach(product -> {
+            var inventory = inventoryRepo.findByProductIdentifier(product.getIdentifier()).orElseThrow(()->new RuntimeException("product Not Found"));
             var response = ProductResponse.builder()
                     .name(product.getName())
                     .description(product.getDescription())
@@ -171,6 +173,7 @@ public class ProductsServices implements productServices {
                     .regularPrice(product.getRegularPrice())
                     .imageURL(parseImageURL(product.getImages()))
                     .productId(product.getIdentifier())
+                    .innDate(inventory.getInDate())
                     .numberOfRatings(product.getReviews().size())
                     .rating(product.getAverageRating())
                     .build();
@@ -219,6 +222,8 @@ public class ProductsServices implements productServices {
 
         return (double) intersection.size() / union.size();
     }
+
+
 
 
 
@@ -295,6 +300,21 @@ public class ProductsServices implements productServices {
         return products.stream()
                 .sorted((Comparator.comparingDouble(Product::getAverageRating).reversed()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public String deleteProduct(String productId) {
+       return null;
+    }
+
+    @Override
+    public ProductResponse getProductById(String productId) {
+        return null;
+    }
+
+    @Override
+    public ProductResponse updateProduct(ProductRequest request, String productId) {
+        return null;
     }
 
     private List<String> parseImageURL(List<resourceDetails> images){

@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class AddressResponse {
     private String name;
     private String email;
-    private Long   number;
+    private String  phone;
     private String city;
     private String country;
     private int zipCode;

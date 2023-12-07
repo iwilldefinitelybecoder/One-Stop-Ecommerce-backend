@@ -25,7 +25,7 @@ public class AddressServices implements AddressService {
             var address = Address.builder()
                     .city(request.getCity())
                     .country(request.getCountry())
-                    .number(request.getNumber())
+                    .phone(request.getPhone())
                     .area(request.getArea())
                     .locality(request.getLocality())
                     .name(request.getName())
@@ -37,7 +37,7 @@ public class AddressServices implements AddressService {
 
             customer.getAddress().add(address);
             customerServices.updateCustomer(customer);
-            return "Address saved successfully";
+            return "SUCCESS";
         }catch (Exception e) {
             return e.getMessage();
         }
@@ -50,7 +50,7 @@ public class AddressServices implements AddressService {
                 .addressId(address.getIdentifier())
                 .city(address.getCity())
                 .country(address.getCountry())
-                .number(address.getNumber())
+                .phone(address.getPhone())
                 .locality(address.getLocality())
                 .name(address.getName())
                 .email(address.getEmail())
@@ -67,7 +67,7 @@ public class AddressServices implements AddressService {
         address.setName(request.getName());
         address.setArea(request.getArea());
         address.setLocality(request.getLocality());
-        address.setNumber(request.getNumber());
+        address.setPhone(request.getPhone());
         address.setEmail(request.getEmail());
         address.setZipCode(request.getZipCode());
 

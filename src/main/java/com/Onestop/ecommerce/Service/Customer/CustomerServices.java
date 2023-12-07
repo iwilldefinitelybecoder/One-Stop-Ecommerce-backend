@@ -63,7 +63,7 @@ public class CustomerServices {
                     .addressId(address.getIdentifier())
                     .city(address.getCity())
                     .country(address.getCountry())
-                    .number(address.getNumber())
+                    .phone(address.getPhone())
                     .locality(address.getLocality())
                     .name(address.getName())
                     .email(address.getEmail())

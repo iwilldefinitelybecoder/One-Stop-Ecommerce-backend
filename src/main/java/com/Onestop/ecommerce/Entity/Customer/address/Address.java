@@ -31,7 +31,7 @@ import java.util.UUID;
 
         private String name;
         private String email;
-        private Long number;
+        private String phone;
 
         @Column(length = 300)
         private String city;

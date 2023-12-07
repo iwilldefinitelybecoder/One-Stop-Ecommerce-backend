@@ -3,6 +3,8 @@ package com.Onestop.ecommerce.Dto.productsDto;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +19,7 @@ public class ProductResponse {
     private String description;
     private String category;
     private Double rating;
+    private Date innDate;
     private Map<String,?> extraAttributes;
     private long numberOfRatings;
 }
