@@ -11,11 +11,15 @@ import com.Onestop.ecommerce.Entity.Customer.cart.Items;
 import com.Onestop.ecommerce.Entity.Customer.cart.WishList;
 import com.Onestop.ecommerce.Entity.Logistics.ProductInventory;
 import com.Onestop.ecommerce.Entity.Logistics.WareHouse;
+import com.Onestop.ecommerce.Entity.UserMessages.MessageAction;
+import com.Onestop.ecommerce.Entity.UserMessages.MessageStatus;
 import com.Onestop.ecommerce.Entity.products.Product;
 import com.Onestop.ecommerce.Entity.products.Review;
 import com.Onestop.ecommerce.Entity.products.resourceDetails;
+import com.Onestop.ecommerce.Entity.user.userEntity;
 import com.Onestop.ecommerce.Entity.vendor.Vendor;
 import com.Onestop.ecommerce.Events.Emmitter.DisableProductEmmitter;
+import com.Onestop.ecommerce.Events.Emmitter.MessageEmitter;
 import com.Onestop.ecommerce.Repository.CustomerRepo.CartItemsRepo;
 import com.Onestop.ecommerce.Repository.CustomerRepo.CartRepo;
 import com.Onestop.ecommerce.Repository.CustomerRepo.WishListRepo;
@@ -351,7 +355,15 @@ public class ProductsServices implements productServices {
             productsRepo.save(product);
 
         },()->{
-            throw new RuntimeException("product not found");
+            cartItemsRepo.findAllByProductIdentifier(productId).ifPresent(items -> {
+                items.forEach(item -> {
+                    Customer customer = item.getCart().getCustomer();
+                    userEntity user = customer.getUser();
+                    eventPublisher.publishEvent(new MessageEmitter(item.getProduct().getName()+ " is no longer available And hasBeen Moved To WishList" +
+                            "You will Be Notified If Its Available Again", MessageAction.PRODUCT_REMOVED, MessageStatus.PENDING, user));
+
+                });
+            });
         });
         return "success";
     }

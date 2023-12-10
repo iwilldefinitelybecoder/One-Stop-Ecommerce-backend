@@ -6,10 +6,10 @@ import com.Onestop.ecommerce.Entity.UserMessages.UserMessages;
 import java.util.List;
 
 public interface MessageService {
-    List<MessageResponse> getAllMessages();
+    List<MessageResponse> getAllMessages(String email);
     void deleteMessage(String identifier);
-    void deleteAllMessages();
+    void deleteAllMessages(String email);
     String newMessage(UserMessages userMessages);
-    String updateMessage(UserMessages userMessages);
-    String deleteMessage(UserMessages userMessages);
+    String updateMessage(String messageId);
+
 }

@@ -23,7 +23,7 @@ public class UserMessages {
     @Column(columnDefinition = "TEXT")
     private String message;
     @Enumerated(EnumType.STRING)
-    private String action;
+    private MessageAction action;
     @Enumerated(EnumType.STRING)
     private MessageStatus status;
 
