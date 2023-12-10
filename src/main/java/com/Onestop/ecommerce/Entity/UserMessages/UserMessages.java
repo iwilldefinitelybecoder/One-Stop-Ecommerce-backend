@@ -7,6 +7,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+import java.util.UUID;
+
 @Data
 @Entity
 @AllArgsConstructor
@@ -17,11 +20,26 @@ public class UserMessages {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(columnDefinition = "TEXT")
     private String message;
-    private String application;
+    @Enumerated(EnumType.STRING)
+    private String action;
     @Enumerated(EnumType.STRING)
     private MessageStatus status;
+
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name = "email", referencedColumnName = "email")
+    @JoinColumn(name = "customer_id", referencedColumnName = "id")
     private userEntity user;
+
+    private String identifier;
+    @OrderBy("createdAt DESC")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdAt;
+
+    @PrePersist
+    private void prePersist(){
+        this.createdAt = new Date();
+        this.identifier = UUID.randomUUID().toString();
+    }
+
 }

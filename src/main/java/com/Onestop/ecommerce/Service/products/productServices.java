@@ -3,6 +3,7 @@ package com.Onestop.ecommerce.Service.products;
 import com.Onestop.ecommerce.Controller.productController.ProductRequest;
 import com.Onestop.ecommerce.Dto.productsDto.*;
 import com.Onestop.ecommerce.Entity.products.Product;
+import jakarta.transaction.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -34,4 +35,9 @@ public interface productServices {
     String deleteProduct(String productId);
     ProductResponse getProductById(String productId);
     ProductResponse updateProduct(ProductRequest request, String productId);
+
+    String publishProduct(String productId);
+
+    @Transactional
+    String removeDisabledProduct(String productId);
 }

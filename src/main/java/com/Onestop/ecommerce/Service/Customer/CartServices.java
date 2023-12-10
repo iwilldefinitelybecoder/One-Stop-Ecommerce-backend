@@ -70,9 +70,14 @@ public class CartServices implements CartService {
                     info.add(productInfo);
                 });
         return CartItemsResponse.builder()
-                .cartTotal(cart.getCartTotal())
+
                 .totalItems(cartItems.size())
                 .productInfo(info)
+                .tax(info.size() * 0.18)
+                .shippingCharges(info.size() * 0.05)
+                .discount(0.0)
+                .cartTotal(cart.getCartTotal())
+                .grandTotal(cart.getCartTotal() + (info.size() * 0.18) + (info.size() * 0.05))
 
                 .cartId(cart.getIdentifier())
                 .build();

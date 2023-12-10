@@ -3,10 +3,12 @@ package com.Onestop.ecommerce.Service.Customer;
 import com.Onestop.ecommerce.Dto.CustomerDto.AddressResponse;
 import com.Onestop.ecommerce.Entity.Customer.Customer;
 import com.Onestop.ecommerce.Entity.Customer.cart.Cart;
+import com.Onestop.ecommerce.Entity.Customer.cart.WishList;
 import com.Onestop.ecommerce.Entity.user.userEntity;
 import com.Onestop.ecommerce.Exceptions.CustomerNotFoundException;
 import com.Onestop.ecommerce.Repository.CustomerRepo.CartRepo;
 import com.Onestop.ecommerce.Repository.CustomerRepo.CustomerRepo;
+import com.Onestop.ecommerce.Repository.CustomerRepo.WishListRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ public class CustomerServices {
     private final CartRepo cartRepo;
 
     private final CartServices cartServices;
+    private final WishListRepo wishListRepo;
 
     @Transactional
     public String saveCustomer(userEntity user){
@@ -35,9 +38,15 @@ public class CustomerServices {
         var cart = Cart.builder()
                 .customer(customer)
                 .build();
+        WishList wishList = WishList.builder()
+                .customer(customer)
+                .product(new ArrayList<>())
+                .build();
         customer.setCart(cart);
-        customerRepo.save(customer);
+        customer.setWishList(wishList);
+        wishListRepo.save(wishList);
         cartRepo.save(cart);
+        customerRepo.save(customer);
         return "Customer saved successfully";
 
     }

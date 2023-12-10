@@ -24,7 +24,7 @@ public class productsDto {
     private List<String> productTypeTags;
     private double salePrice;
     private String wareHouseId;
-    private Map<Object,?> extraAttributes;
+//    private Map<Object,?> extraAttributes;
 
 //    public void setExtraAttributes(String extraAttributes) {
 //        ObjectMapper mapper = new ObjectMapper();

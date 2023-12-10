@@ -17,4 +17,11 @@ public class CartItemsResponse {
     private List<ProductInfo> productInfo;
     private Double cartTotal;
     private Integer totalItems;
+    private Double discount;
+    private Double shippingCharges;
+    private Double tax;
+    private Double grandTotal;
+   private String subTotal;
+
 }
+

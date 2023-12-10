@@ -22,4 +22,5 @@ public class ProductResponse {
     private Date innDate;
     private Map<String,?> extraAttributes;
     private long numberOfRatings;
+    private boolean isPublished;
 }

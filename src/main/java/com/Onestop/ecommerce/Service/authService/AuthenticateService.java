@@ -12,6 +12,7 @@ import com.Onestop.ecommerce.Exceptions.UserNotfoundException;
 import com.Onestop.ecommerce.Repository.userRepo.RoleRepository;
 import com.Onestop.ecommerce.Repository.userRepo.UserRepository;
 import com.Onestop.ecommerce.Service.Customer.CustomerServices;
+import com.Onestop.ecommerce.Service.Customer.WishListServices;
 import com.Onestop.ecommerce.configuration.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +54,6 @@ public class AuthenticateService {
         userRespository.save(user);
         addRoleToUser(user, "USER");
         String value = customerServices.saveCustomer(user);
-        log.info(value);
         var user1 = userRespository.findByEmail(registerRequest.getEmail()).orElseThrow();
         var jwtToken = jwtTokenProvider.generateToken(user);
         Collection<String> roles = new ArrayList<>();

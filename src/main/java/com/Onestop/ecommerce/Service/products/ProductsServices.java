@@ -5,13 +5,20 @@ import com.Onestop.ecommerce.Dto.productsDto.ProductResponse;
 import com.Onestop.ecommerce.Dto.productsDto.ReviewRequest;
 import com.Onestop.ecommerce.Dto.productsDto.productsDto;
 import com.Onestop.ecommerce.Dto.productsDto.resourceDetailsTdo;
+import com.Onestop.ecommerce.Entity.Customer.Customer;
+import com.Onestop.ecommerce.Entity.Customer.cart.Cart;
+import com.Onestop.ecommerce.Entity.Customer.cart.Items;
+import com.Onestop.ecommerce.Entity.Customer.cart.WishList;
 import com.Onestop.ecommerce.Entity.Logistics.ProductInventory;
 import com.Onestop.ecommerce.Entity.Logistics.WareHouse;
 import com.Onestop.ecommerce.Entity.products.Product;
-import com.Onestop.ecommerce.Entity.products.ProductExtraAttributes;
 import com.Onestop.ecommerce.Entity.products.Review;
 import com.Onestop.ecommerce.Entity.products.resourceDetails;
 import com.Onestop.ecommerce.Entity.vendor.Vendor;
+import com.Onestop.ecommerce.Events.Emmitter.DisableProductEmmitter;
+import com.Onestop.ecommerce.Repository.CustomerRepo.CartItemsRepo;
+import com.Onestop.ecommerce.Repository.CustomerRepo.CartRepo;
+import com.Onestop.ecommerce.Repository.CustomerRepo.WishListRepo;
 import com.Onestop.ecommerce.Repository.LogisticsRepo.InventoryRepo;
 import com.Onestop.ecommerce.Repository.LogisticsRepo.WareHouseRepo;
 import com.Onestop.ecommerce.Repository.VendorRepo.VendorRepository;
@@ -20,6 +27,7 @@ import com.Onestop.ecommerce.Service.Customer.CustomerServices;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -66,9 +74,20 @@ public class ProductsServices implements productServices {
     @Autowired
     private CustomerServices customerServices;
 
+    @Autowired
+    private CartItemsRepo cartItemsRepo;
+
+    @Autowired
+    private CartRepo cartRepo;
+
+    @Autowired
+    private WishListRepo wishListRepo;
+
     private Vendor getVendor(String email){
         return vendorRepo.findByUserEmail(email).orElseThrow(()-> new RuntimeException("vendor not found"));
     }
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
     @Override
     @Transactional
     public String saveProduct(productsDto request,resourceDetailsTdo images,String email) {
@@ -165,6 +184,9 @@ public class ProductsServices implements productServices {
     public List<ProductResponse> getProducts() {
         List<ProductResponse> products = new ArrayList<>();
         productsRepo.findAll().forEach(product -> {
+           if (!product.isEnabled()) {
+               return;
+           };
             var inventory = inventoryRepo.findByProductIdentifier(product.getIdentifier()).orElseThrow(()->new RuntimeException("product Not Found"));
             var response = ProductResponse.builder()
                     .name(product.getName())
@@ -173,6 +195,7 @@ public class ProductsServices implements productServices {
                     .regularPrice(product.getRegularPrice())
                     .imageURL(parseImageURL(product.getImages()))
                     .productId(product.getIdentifier())
+                    .isPublished(product.isEnabled())
                     .innDate(inventory.getInDate())
                     .numberOfRatings(product.getReviews().size())
                     .rating(product.getAverageRating())
@@ -315,6 +338,42 @@ public class ProductsServices implements productServices {
     @Override
     public ProductResponse updateProduct(ProductRequest request, String productId) {
         return null;
+    }
+
+    @Override
+    public String publishProduct(String productId) {
+        productsRepo.findByIdentifier(productId).ifPresentOrElse(product -> {
+            if(product.isEnabled()){
+                eventPublisher.publishEvent(new DisableProductEmmitter(productId));
+            }
+
+            product.setEnabled(!product.isEnabled());
+            productsRepo.save(product);
+
+        },()->{
+            throw new RuntimeException("product not found");
+        });
+        return "success";
+    }
+
+    @Transactional
+    @Override
+    public String removeDisabledProduct(String productId) {
+        var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
+        var cartItems = cartItemsRepo.findAllByProductIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
+        for(Items item:cartItems){
+            Customer customer = item.getCart().getCustomer();
+            log.info("item deleted");
+            Cart cart = customer.getCart();
+            WishList wishList = customer.getWishList();
+            wishList.getProduct().add(item.getProduct());
+            cart.getItems().remove(item);
+            cartItemsRepo.delete(item);
+            cartRepo.save(cart);
+            wishListRepo.save(wishList);
+
+        }
+        return "success";
     }
 
     private List<String> parseImageURL(List<resourceDetails> images){

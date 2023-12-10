@@ -49,6 +49,7 @@ public class AddressController {
     @PostMapping("/add")
     public ResponseEntity<?> addAddress(@RequestBody AddressRequest address){
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info(userName);
         try
         {
             return ResponseEntity.status(HttpStatus.OK).body(addressServices.saveAddress(address,userName));

@@ -38,6 +38,12 @@ public class Cart {
 
     private double CartTotal;
 
+    private double shippingTotal;
+    private double taxTotal;
+    private double discountTotal;
+    private double subTotal;
+    private double grandTotal;
+
     @PrePersist
     public void performPersistActions(){
         uniqueIdentifier();
@@ -46,6 +52,7 @@ public class Cart {
     @PreUpdate
     public void performPreUpdateActions(){
         updateTotalItems();
+        updateCartTotal();
     }
 
     private void uniqueIdentifier(){
@@ -59,6 +66,16 @@ public class Cart {
         }
         this.totalItems = this.items.size();
     }
+
+    private void updateCartTotal(){
+        if(this.items == null){
+            return;
+        }
+        this.CartTotal = this.items.stream().mapToDouble(Items::getTotalPrice).sum();
+    }
+
+
+
 
 
 

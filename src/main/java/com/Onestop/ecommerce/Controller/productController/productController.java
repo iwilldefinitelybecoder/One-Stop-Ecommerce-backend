@@ -6,8 +6,11 @@ import com.Onestop.ecommerce.Dto.productsDto.productsDto;
 import com.Onestop.ecommerce.Dto.productsDto.resourceDetailsTdo;
 import com.Onestop.ecommerce.Entity.products.Product;
 
+import com.Onestop.ecommerce.Events.Emmitter.DisableProductEmmitter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.autoconfigure.tracing.OpenTelemetryAutoConfiguration;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +28,9 @@ public class productController {
 
     @Autowired
     private com.Onestop.ecommerce.Service.products.ProductsServices ProductsServices;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(
@@ -120,6 +126,23 @@ public class productController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }
+
+
+
+    }
+
+    @PostMapping("/product/publish")
+    public ResponseEntity<?> publishProduct(@RequestParam(value = "productId") String productId) {
+        try{
+            String response = ProductsServices.publishProduct(productId);
+
+
+            return ResponseEntity.status(200).body(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+
+
 
     }
 

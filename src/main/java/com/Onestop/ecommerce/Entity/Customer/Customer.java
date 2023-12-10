@@ -1,8 +1,10 @@
 package com.Onestop.ecommerce.Entity.Customer;
 
+import com.Onestop.ecommerce.Entity.Cupon.Coupons;
 import com.Onestop.ecommerce.Entity.Customer.address.Address;
 import com.Onestop.ecommerce.Entity.Customer.card.Cards;
 import com.Onestop.ecommerce.Entity.Customer.cart.Cart;
+import com.Onestop.ecommerce.Entity.Customer.cart.WishList;
 import com.Onestop.ecommerce.Entity.orders.Orders;
 import com.Onestop.ecommerce.Entity.user.userEntity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -16,6 +18,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 @Entity
 @Data
@@ -46,4 +49,16 @@ public class Customer implements Serializable {
     @JsonIgnoreProperties("customer")
     @OneToOne(cascade = CascadeType.ALL,mappedBy = "customer")
     private Cart cart ;
+
+    @JsonIgnoreProperties("customer")
+    @OneToOne(cascade = CascadeType.ALL,mappedBy = "customer")
+    private WishList wishList;
+
+    @ManyToMany
+    @JoinTable(
+            name = "customer_coupons",
+            joinColumns = @JoinColumn(name = "customer_id"),
+            inverseJoinColumns = @JoinColumn(name = "coupons_id"))
+    private List<Coupons> coupons = new ArrayList<>();
+
 }

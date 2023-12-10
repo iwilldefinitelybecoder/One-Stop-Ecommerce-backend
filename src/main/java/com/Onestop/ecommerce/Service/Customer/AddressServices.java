@@ -8,9 +8,11 @@ import com.Onestop.ecommerce.Exceptions.AddressNotFoundException;
 import com.Onestop.ecommerce.Repository.CustomerRepo.AddressRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AddressServices implements AddressService {
 
@@ -20,6 +22,7 @@ public class AddressServices implements AddressService {
 
     @Override
     public String saveAddress(AddressRequest request, String email) {
+        log.info(email);
         try {
             Customer customer = customerServices.getCustomer(email);
             var address = Address.builder()
