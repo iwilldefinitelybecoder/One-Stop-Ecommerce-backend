@@ -20,7 +20,7 @@ public class ResendVerificationTokenListner implements ApplicationListener<Resen
         var token = service.generateVerificationToken(event.getToken());
         service.saveToken(token.getUser(),token.getToken());
         String body = "To verify your account, please click the link below:\n"
-                + event.getAppUrl() + "?token=" + token + "\n\"" +
+                + event.getAppUrl() + "?token=" + token.getToken() + "\n\"" +
                 "This link is valid for 10 minutes after that you have to request for New link." ;
         mailingServices.sendEmail(token.getUser().getEmail(),body,"Verification Email");
 

@@ -2,6 +2,7 @@ package com.Onestop.ecommerce.Service.Customer;
 
 import com.Onestop.ecommerce.Dto.CustomerDto.CardRequest;
 import com.Onestop.ecommerce.Dto.CustomerDto.CardResponse;
+import com.Onestop.ecommerce.Dto.CustomerDto.Orders.SecureCardResponse;
 import com.Onestop.ecommerce.Entity.Customer.Customer;
 import com.Onestop.ecommerce.Entity.Customer.card.Cards;
 import com.Onestop.ecommerce.Repository.CustomerRepo.CardsRepo;
@@ -156,5 +157,17 @@ var card = cardsRepo.findByIdentifier(cardId).orElse(null);
     }
     private String formatToDateString(LocalDate localDate) {
         return localDate.format(DateTimeFormatter.ofPattern("MM/yy"));
+    }
+
+    public SecureCardResponse getPaymentDetails(String cardId) {
+        var card = cardsRepo.findByIdentifier(cardId).orElse(null);
+        if(card == null){
+            throw new RuntimeException("NON_EXISTENT_CARD");
+        }
+        return SecureCardResponse.builder()
+                .cardNumber(card.getNumber().toString())
+                .expireDate(card.getExpireDate())
+                .cvc(card.getCvc())
+                .build();
     }
 }

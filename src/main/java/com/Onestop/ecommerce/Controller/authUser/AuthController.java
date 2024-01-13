@@ -24,6 +24,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.concurrent.Flow;
 
 @RestController
@@ -70,7 +71,13 @@ public class AuthController {
         try {
             var user = tokenService.getEmail(token);
             log.info("User Details: {}",user);
-            return ResponseEntity.status(HttpStatus.OK).body(user);
+            HashMap<String,String> response = new HashMap<>();
+            response.put("email",user.getEmail());
+            response.put("firstName",user.getFirstName());
+            response.put("lastName",user.getLastName());
+            response.put("profileIcon",user.getImageId() == null ? null : user.getImageId().toString());
+
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         }catch (Exception e){
             log.info("Error: {}",e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -105,16 +112,17 @@ public class AuthController {
     @PostMapping("/requestResetPassword")
     public ResponseEntity<?> requestResetPassword(@RequestParam("email") String email,
                                            HttpServletRequest request) {
+        log.info(request.getHeader("x-host-url"));
         var user = services.getUser(email);
         if(user == null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User Does Not Exist");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("USER_NOT_FOUND");
         }
         try {
             eventPublisher.publishEvent(new ResetPasswordEmmitter(email,applicationUrl(request)));
-            return ResponseEntity.status(HttpStatus.OK).body("Reset Password Token Sent");
+            return ResponseEntity.status(HttpStatus.OK).body("SUCCESS");
 
         }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error in sending token");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("ERROR_IN_SENDING_EMAIL");
         }
     }
 
@@ -135,7 +143,7 @@ public class AuthController {
 
     @PostMapping("/resetPassword")
     public ResponseEntity<?> resetPassword(@RequestBody PasswordResetRequest request) {
-        var result = services.resetPassword(request.getEmail(),request.getPassword());
+        var result = services.resetPassword(request.getEmail(),request.getPassword(),request.getToken());
         if(result.equals("SUCCESS")){
             return ResponseEntity.status(HttpStatus.OK).body("Password Updated");
 
@@ -155,6 +163,7 @@ public class AuthController {
     }
 
     private String applicationUrl(HttpServletRequest servletRequest) {
+        log.info("URL: {}",servletRequest.getHeader("x-host-url"));
         return servletRequest.getHeader("x-host-url");
 
 

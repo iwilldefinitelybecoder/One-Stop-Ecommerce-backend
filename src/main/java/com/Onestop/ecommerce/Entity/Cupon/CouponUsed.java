@@ -19,6 +19,7 @@ public class CouponUsed {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long Id;
     private Date usedDate;
+    private int usageCount;
     @ManyToOne
     @JoinColumn(name = "coupon_id")
     private Coupons coupons;

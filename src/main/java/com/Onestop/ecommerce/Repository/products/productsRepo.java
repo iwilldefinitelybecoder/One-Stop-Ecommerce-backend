@@ -15,7 +15,9 @@ public interface productsRepo extends JpaRepository<Product, Long> {
 //    Product findProductWithImagesAndTagsById(@Param("productId") Long id);
     Optional<Product> findByIdentifier(String productIdentifier);
 
-    @Query(value = "SELECT * FROM products WHERE name LIKE %:keyword% AND (:category IS NULL OR category = :category)", nativeQuery = true)
+    @Query(value = "SELECT * FROM products WHERE (:keyword IS NULL OR POSITION(:keyword IN name) > 0) AND (COALESCE(:category, '') = '' OR category = :category)", nativeQuery = true)
+
+
     List<Product> findProductsByRegex(@Param("keyword") String keyword, @Param("category") String category);
 
     List<Product> findAllByCategory(String category);

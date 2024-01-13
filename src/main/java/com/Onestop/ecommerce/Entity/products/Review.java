@@ -1,6 +1,7 @@
 package com.Onestop.ecommerce.Entity.products;
 
 import com.Onestop.ecommerce.Entity.Customer.Customer;
+import com.Onestop.ecommerce.Entity.Customer.UserPurchaseHistory;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,8 +26,14 @@ public class Review {
     @ManyToOne
     @JoinColumn(name = "customer_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FK_customer_id"))
     private Customer customer;
+
+    @OneToOne
+    @JoinColumn(name = "user_purchase_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FK_purchase_id"))
+    private UserPurchaseHistory userPurchaseHistory;
+
     private String review;
     private int rating;
     private Date date;
+    private String headline;
 
 }

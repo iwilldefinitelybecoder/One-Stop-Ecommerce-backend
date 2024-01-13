@@ -43,4 +43,16 @@ public class GlobalApiExceptionHandler {
             return response;
     }
 
+
+    @ExceptionHandler({CouponException.class})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseBody
+    public ExceptionResponse handleCouponException(CouponException ex) {
+       ExceptionResponse response = new ExceptionResponse();
+       response.setMessage(ex.getMessage());
+         response.setErrorCode("404");
+            response.setRequestedURI("http://localhost:8080/api/v1/products/coupons");
+            return response;
+    }
+
 }

@@ -8,5 +8,6 @@ public enum MetaAttribute {
     ON_SALE,
     NEW_ARRIVAL,
     BIG_DISCOUNT,
-    FLASH_DEAL
+    FLASH_DEAL,
+    NOT_SPONSORED,
 }

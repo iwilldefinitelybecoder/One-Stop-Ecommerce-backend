@@ -3,10 +3,15 @@ package com.Onestop.ecommerce.Controller.MessaageController;
 import com.Onestop.ecommerce.Entity.UserMessages.UserMessages;
 import com.Onestop.ecommerce.Service.MessageService.MessageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/messages")
@@ -18,10 +23,12 @@ public class MessageController {
 
 
     @GetMapping("/getAll")
-    public ResponseEntity<?> getAllMessages() {
+    public ResponseEntity<?> getAllMessages(@RequestParam(defaultValue = "0") int page,
+                                            @RequestParam(defaultValue = "5") int size) {
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
-            return ResponseEntity.status(HttpStatus.OK).body(messageService.getAllMessages(userEmail));
+            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+            return ResponseEntity.status(HttpStatus.OK).body(messageService.getAllMessages(userEmail,pageable));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
@@ -50,7 +57,7 @@ public class MessageController {
 
 
     @PutMapping("/update")
-    public ResponseEntity<?> updateMessage(@RequestParam ("messageId") String messageId) {
+    public ResponseEntity<?> updateMessage(@RequestParam ("messageId") List<String> messageId) {
         try {
             return ResponseEntity.status(HttpStatus.OK).body(messageService.updateMessage(messageId));
         } catch (Exception e) {

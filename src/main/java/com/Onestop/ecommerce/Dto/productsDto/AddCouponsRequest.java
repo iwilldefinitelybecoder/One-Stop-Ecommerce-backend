@@ -1,5 +1,7 @@
 package com.Onestop.ecommerce.Dto.productsDto;
 
+import com.Onestop.ecommerce.Entity.Cupon.CouponType;
+import com.Onestop.ecommerce.Entity.Cupon.CouponUsage;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,15 +15,15 @@ import java.util.Date;
 @Builder
 public class AddCouponsRequest {
     private String couponDescription;
-
-
-
     private String name;
     private double discountPercentage;
     private double discountAmount;
+    private Date couponExpiryDate;
+    private Date couponStartDate;
     private double minimumPurchaseAmount;
     private double maximumDiscountAmount;
-    private String couponType;
+    private CouponType couponType;
     private String couponCategory;
-    private String couponUsageLimit;
+    private int couponUsageLimit;
+    private CouponUsage couponUsage;
 }

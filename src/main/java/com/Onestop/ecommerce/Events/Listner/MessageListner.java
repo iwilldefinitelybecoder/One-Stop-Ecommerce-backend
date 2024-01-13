@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
+
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ public class MessageListner implements ApplicationListener<MessageEmitter> {
                 .action(event.getAction())
                 .status(event.getStatus())
                 .user(event.getUser())
+                .createdAt(new Date())
                 .build();
         messageServices.newMessage(message);
 

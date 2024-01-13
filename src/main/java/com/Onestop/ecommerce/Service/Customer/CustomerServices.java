@@ -84,4 +84,12 @@ public class CustomerServices {
         return  responses;
 
     }
+
+    public double getCartTotal(String email) {
+        var customer = getCustomer(email);
+        if(customer.getCart() == null){
+            return 0;
+        }
+        return cartServices.getCartTotal(customer.getCart().getIdentifier());
+    }
 }

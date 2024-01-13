@@ -9,6 +9,7 @@ import com.Onestop.ecommerce.Entity.user.userEntity;
 import com.Onestop.ecommerce.Exceptions.UserAlreadyExistsException;
 import com.Onestop.ecommerce.Exceptions.UserEmailNotVerifiedException;
 import com.Onestop.ecommerce.Exceptions.UserNotfoundException;
+import com.Onestop.ecommerce.Repository.userRepo.ResetPasswordToken;
 import com.Onestop.ecommerce.Repository.userRepo.RoleRepository;
 import com.Onestop.ecommerce.Repository.userRepo.UserRepository;
 import com.Onestop.ecommerce.Service.Customer.CustomerServices;
@@ -16,6 +17,7 @@ import com.Onestop.ecommerce.Service.Customer.WishListServices;
 import com.Onestop.ecommerce.configuration.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,6 +36,7 @@ public class AuthenticateService {
     private final JwtService jwtTokenProvider;
 
     private final RoleRepository roleRepository;
+    private final ResetPasswordToken resetPasswordToken;
 
     private final AuthenticationManager authenticationManager;
     private final CustomerServices customerServices;
@@ -120,11 +123,15 @@ public class AuthenticateService {
         return userRespository.findByEmail(email).orElseThrow();
     }
 
-    public String resetPassword(String email, String password) {
+    public String resetPassword(String email, String password,String token) {
+    log.info("Resetting password for user {}",token);
+
         var user = userRespository.findByEmail(email).orElseThrow();
         user.setPassword(passwordEncoder.encode(password));
+        var res = resetPasswordToken.findByToken(token).orElseThrow();
         try {
             userRespository.save(user);
+            resetPasswordToken.delete(res);
             return "SUCCESS";
         }catch (Exception e){
             return "FAILED";

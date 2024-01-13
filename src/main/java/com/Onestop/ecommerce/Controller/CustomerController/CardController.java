@@ -91,5 +91,18 @@ public class CardController {
 
     }
 
+    @GetMapping("/paymentDetails")
+    public ResponseEntity<?> getPaymentDetails(@RequestParam String cardId){
+        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        try
+        {
+
+            return ResponseEntity.ok(cardServices.getPaymentDetails(cardId));
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
+    }
+
 
 }

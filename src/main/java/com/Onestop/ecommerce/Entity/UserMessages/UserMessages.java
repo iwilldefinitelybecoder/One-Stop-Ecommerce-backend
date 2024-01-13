@@ -27,7 +27,7 @@ public class UserMessages {
     @Enumerated(EnumType.STRING)
     private MessageStatus status;
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "customer_id", referencedColumnName = "id")
     private userEntity user;
 

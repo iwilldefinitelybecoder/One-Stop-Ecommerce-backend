@@ -21,4 +21,6 @@ public class CouponsResponse {
     private double discountAmount;
     private double minimumPurchaseAmount;
     private double maximumDiscountAmount;
+    private String message;
+
 }

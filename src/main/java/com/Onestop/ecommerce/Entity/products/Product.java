@@ -34,6 +34,7 @@ public class Product {
     private double salePrice = 0;
     private boolean enabled = false;
     private boolean published = false;
+    private String brand;
     private double averageRating;
 
     @ManyToOne(fetch = FetchType.EAGER)

@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -34,11 +35,14 @@ public class Coupons {
     @Enumerated(EnumType.STRING)
     private CouponType couponType;
     private String couponCategory;
-    private String couponUsageLimit;
+    private int couponUsageLimit;
+    @Enumerated(EnumType.STRING)
+    private CouponUsage couponUsage;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "coupons")
+    @OneToMany(mappedBy = "coupons", cascade = CascadeType.ALL)
+    private List<CouponUsed> couponUsed = new ArrayList<>();
 
-    private List<Customer> customers;
+
 
 
     @PrePersist
@@ -63,7 +67,7 @@ public class Coupons {
     }
 
     public boolean isCouponValidForCustomer(String email){
-        return this.couponUsageLimit.equals("UNLIMITED") || this.couponUsageLimit.equals("SINGLE") || this.couponUsageLimit.equals(email);
+        return this.couponUsage.equals("UNLIMITED") || this.couponUsage.equals("SINGLE") ;
     }
 
     public boolean isCouponValidForCategory(String category){
@@ -77,6 +81,7 @@ public class Coupons {
     public boolean isCouponValidForOrder(double orderTotal){
         return this.isCouponValid() && orderTotal >= this.minimumPurchaseAmount;
     }
+
 
 
 

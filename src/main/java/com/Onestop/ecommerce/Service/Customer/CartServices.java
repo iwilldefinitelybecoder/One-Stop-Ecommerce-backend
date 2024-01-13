@@ -97,6 +97,9 @@ public class CartServices implements CartService {
     @Override
     public Double getCartTotal(String email) {
         var customer = customerRepo.findByUserEmail(email);
+        if (customer.getCart() == null) {
+            return 0.0;
+        }
         return customer.getCart().getCartTotal();
 
     }

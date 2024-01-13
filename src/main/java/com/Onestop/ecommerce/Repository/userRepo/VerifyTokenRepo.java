@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface VerifyTokenRepo extends JpaRepository<VerifyEmailToken,Long> {
 
     Optional<VerifyEmailToken> findByToken(String token);
+
 }

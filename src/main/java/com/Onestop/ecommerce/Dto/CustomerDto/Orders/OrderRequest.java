@@ -24,7 +24,10 @@ public class OrderRequest {
     private String customerId;
     private String cardId;
     private Double ordertotal;
+    private String couponCode;
     private String paymentProcessId;
     @Enumerated(EnumType.STRING)
     private PaymentMethods paymentMethod;
+    private boolean useWallet;
+    private boolean buyNow;
 }

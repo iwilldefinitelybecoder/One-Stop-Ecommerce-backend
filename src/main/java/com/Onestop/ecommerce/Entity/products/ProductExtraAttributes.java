@@ -18,5 +18,6 @@ import java.util.Map;
 public class ProductExtraAttributes {
     @Id
     private String id;
-    private Map<Object,?> extraAttributes;
+    private String productId;
+    private Map<String,Object> extraAttributes;
 }

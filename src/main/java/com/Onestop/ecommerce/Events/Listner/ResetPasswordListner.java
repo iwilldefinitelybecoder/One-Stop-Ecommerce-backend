@@ -17,16 +17,21 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ResetPasswordListner implements ApplicationListener<ResetPasswordEmmitter> {
 
-    private MailingServices mailingServices;
-    private TokenService tokenService;
-    private AuthenticateService authenticateService;
+    private final MailingServices mailingServices;
+    private final TokenService tokenService;
+    private final AuthenticateService authenticateService;
 
     @Override
     public void onApplicationEvent(ResetPasswordEmmitter event) {
         var user = authenticateService.getUser(event.getUser());
         String token = UUID.randomUUID().toString();
         String appUrl = event.getAppUrl();
-        String res = tokenService.saveResetPasswordToken(user,token);
+        String res = null;
+        try {
+            res = tokenService.saveResetPasswordToken(user,token);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
         if(res.equals("SUCCESS")){
             String body = "To reset your password, please click the link below:\n"
                     + appUrl + "?token=" + token+"\n\"" +

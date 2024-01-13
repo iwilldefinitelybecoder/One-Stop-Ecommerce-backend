@@ -68,7 +68,16 @@ public class TokenService {
 
 
     //reset password token
-    public String saveResetPasswordToken(userEntity user, String token) {
+    public String saveResetPasswordToken(userEntity user, String token) throws Exception {
+        var passwordResetToken = resetPasswordToken.findByUserEmail(user.getEmail()).orElse(null);
+        if(passwordResetToken != null){
+            if(passwordResetToken.getExpiryDate().before(Calendar.getInstance().getTime())){
+                resetPasswordToken.deleteById(passwordResetToken.getId());
+            }
+            else{
+                throw new Exception("LINK_ALREADY_SENT");
+            }
+        }
         var resetToken =  new PasswordResetToken(token,user);
         resetPasswordToken.save(resetToken);
         return "SUCCESS";
@@ -121,7 +130,7 @@ public class TokenService {
                 .ImageId(user.getImageId())
                 .build();
     }
-    public String getEmail(String token){
+    public userEntity getEmail(String token){
         var verifyToken = verifyTokenRepo.findByToken(token).orElse(null);
         if(verifyToken == null){
             throw new UserNotfoundException("User Not Found");
@@ -133,7 +142,6 @@ public class TokenService {
         if((verifyToken.getExpiryDate().getTime() - cal.getTime().getTime())<=0){
             throw new ExpiredTokenException("Token Expired");
         }
-        var user = verifyToken.getUser();
-        return user.getEmail();
+        return verifyToken.getUser();
     }
 }

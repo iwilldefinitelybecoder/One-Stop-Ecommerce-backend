@@ -23,4 +23,8 @@ public class ProductResponse {
     private Map<String,?> extraAttributes;
     private long numberOfRatings;
     private boolean isPublished;
+    private String brand;
+    private String vendorName;
+    private Integer stock;
+
 }

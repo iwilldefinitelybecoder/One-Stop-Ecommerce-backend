@@ -11,4 +11,6 @@ import java.util.List;
 public interface SpecialAttributesRepo extends JpaRepository<MetaAttributes,Long> {
 
     List<Product> findAllProductByAttributesAndIsActive(String attributes, boolean isActive);
+    MetaAttributes findByProductId(Long productId);
+    MetaAttributes findByProductIdAndAttributes(Long productId, MetaAttributes attributes);
 }

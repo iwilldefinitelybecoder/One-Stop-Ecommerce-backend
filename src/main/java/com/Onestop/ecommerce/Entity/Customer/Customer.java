@@ -61,4 +61,8 @@ public class Customer implements Serializable {
             inverseJoinColumns = @JoinColumn(name = "coupons_id"))
     private List<Coupons> coupons = new ArrayList<>();
 
+    @Enumerated(EnumType.STRING)
+    private MembershipType memberShip = MembershipType.SILVER;
+    private double wallet = 0.0;
+
 }

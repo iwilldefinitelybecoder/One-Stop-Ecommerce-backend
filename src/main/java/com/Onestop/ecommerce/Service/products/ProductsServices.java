@@ -1,10 +1,7 @@
 package com.Onestop.ecommerce.Service.products;
 
 import com.Onestop.ecommerce.Controller.productController.ProductRequest;
-import com.Onestop.ecommerce.Dto.productsDto.ProductResponse;
-import com.Onestop.ecommerce.Dto.productsDto.ReviewRequest;
-import com.Onestop.ecommerce.Dto.productsDto.productsDto;
-import com.Onestop.ecommerce.Dto.productsDto.resourceDetailsTdo;
+import com.Onestop.ecommerce.Dto.productsDto.*;
 import com.Onestop.ecommerce.Entity.Customer.Customer;
 import com.Onestop.ecommerce.Entity.Customer.cart.Cart;
 import com.Onestop.ecommerce.Entity.Customer.cart.Items;
@@ -13,10 +10,9 @@ import com.Onestop.ecommerce.Entity.Logistics.ProductInventory;
 import com.Onestop.ecommerce.Entity.Logistics.WareHouse;
 import com.Onestop.ecommerce.Entity.UserMessages.MessageAction;
 import com.Onestop.ecommerce.Entity.UserMessages.MessageStatus;
-import com.Onestop.ecommerce.Entity.products.Product;
-import com.Onestop.ecommerce.Entity.products.Review;
-import com.Onestop.ecommerce.Entity.products.resourceDetails;
+import com.Onestop.ecommerce.Entity.products.*;
 import com.Onestop.ecommerce.Entity.user.userEntity;
+import com.Onestop.ecommerce.Entity.vendor.SalesData;
 import com.Onestop.ecommerce.Entity.vendor.Vendor;
 import com.Onestop.ecommerce.Events.Emmitter.DisableProductEmmitter;
 import com.Onestop.ecommerce.Events.Emmitter.MessageEmitter;
@@ -25,6 +21,7 @@ import com.Onestop.ecommerce.Repository.CustomerRepo.CartRepo;
 import com.Onestop.ecommerce.Repository.CustomerRepo.WishListRepo;
 import com.Onestop.ecommerce.Repository.LogisticsRepo.InventoryRepo;
 import com.Onestop.ecommerce.Repository.LogisticsRepo.WareHouseRepo;
+import com.Onestop.ecommerce.Repository.VendorRepo.SalesRepo;
 import com.Onestop.ecommerce.Repository.VendorRepo.VendorRepository;
 import com.Onestop.ecommerce.Repository.products.*;
 import com.Onestop.ecommerce.Service.Customer.CustomerServices;
@@ -87,19 +84,25 @@ public class ProductsServices implements productServices {
     @Autowired
     private WishListRepo wishListRepo;
 
+    @Autowired
+    private SalesRepo salesRepo;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+
     private Vendor getVendor(String email){
         return vendorRepo.findByUserEmail(email).orElseThrow(()-> new RuntimeException("vendor not found"));
     }
-    @Autowired
-    private ApplicationEventPublisher eventPublisher;
+
     @Override
     @Transactional
-    public String saveProduct(productsDto request,resourceDetailsTdo images,String email) {
+    public String saveProduct(productsDto request,resourceDetailsTdo images,String email,Map<String,Object> extraAttributess) {
         var vendor = getVendor(email);
-//        var extraAttributes = ProductExtraAttributes.builder()
-//                .extraAttributes(request.getExtraAttributes())
-//                .build();
-//        String newAttributeId = productExtraAttributesRepo.save(extraAttributes).getId();
+        var extraAttributes = ProductExtraAttributes.builder()
+                .extraAttributes(extraAttributess)
+                .productId(null)
+                .build();
+        String newAttributeId = productExtraAttributesRepo.save(extraAttributes).getId();
         WareHouse wareHouse = wareHouseRepo.findByIdentifier(request.getWareHouseId()).orElseThrow(()->{throw new RuntimeException("No warehouse exists");});
         var product = Product.builder()
                 .name(request.getName())
@@ -107,9 +110,10 @@ public class ProductsServices implements productServices {
                 .category(request.getCategory())
                 .stock(request.getStock())
                 .vendor(vendor)
+                .brand(request.getBrand())
                 .wareHouse(wareHouse)
                 .reviews(new ArrayList<>())
-//                .extraAttributesId(newAttributeId)
+                .extraAttributesId(newAttributeId)
                 .regularPrice(request.getRegularPrice())
                 .productTypeTags(request.getProductTypeTags())
                 .salePrice(request.getSalePrice() !=0?request.getSalePrice():0)
@@ -124,6 +128,7 @@ public class ProductsServices implements productServices {
         product.setProductInventory(inventoryProduct);
         Product product1 = saveImages(images,product);
         wareHouse.getInventory().add(inventoryProduct);
+        createProductSales(product);
         try {
             productsRepo.save(product1);
             inventoryRepo.save(inventoryProduct);
@@ -137,10 +142,7 @@ public class ProductsServices implements productServices {
 
 
 
-    @Override
-    public Product findProductById(Long id) {
-        return productsRepo.findById(id).get();
-    }
+
 
     @Override
     public Product saveImages(resourceDetailsTdo images, Product product) {
@@ -184,6 +186,33 @@ public class ProductsServices implements productServices {
         }
     }
 
+    private boolean deleteFiles(Product product) {
+        var ResourceDetails = resourceRepo.findByProductId(product.getId()).orElseThrow(()-> new RuntimeException("image not found"));
+        List<String> fileNames = ResourceDetails.stream().map(resourceDetails::getUrl).toList();
+        boolean success = true;
+        String directoryPath = "C:/Users/tonys/Downloads/product-Images/";
+
+        for (String fileName : fileNames) {
+            File file = new File(directoryPath + fileName);
+
+            if (file.exists()) {
+                if (file.delete()) {
+                    System.out.println(fileName + " deleted successfully.");
+                } else {
+                    System.out.println("Failed to delete " + fileName);
+                    success = false;
+                }
+            } else {
+                System.out.println(fileName + " does not exist.");
+                success = false;
+            }
+        }
+
+        return success;
+    }
+
+
+
     @Override
     public List<ProductResponse> getProducts() {
         List<ProductResponse> products = new ArrayList<>();
@@ -213,18 +242,23 @@ public class ProductsServices implements productServices {
     }
 
     @Override
-    public List<String> searchProducts(String keyword,String category) {
-        if(keyword == null || keyword.isBlank()) {
+    public List<String> searchProducts(String keyword, String category) {
+        if (keyword == null || keyword.isBlank()) {
             return null;
         }
-        if(category == null || category.isBlank()) {
-            category = "";
+        if (category == null || category.isBlank()) {
+            category = null;
         }
-        log.info("keyword: {}",keyword);
-        List<Product> products = productsRepo.findProductsByRegex(keyword,category);
-        log.info("products: {}",products.get(0).getName());
-        return products.stream().map(Product::getName).toList();
+        log.info("keyword: {}", keyword);
+        List<Product> products = productsRepo.findProductsByRegex(keyword, category);
+        if (!products.isEmpty()) {
+            return products.stream().map(Product::getName).toList();
+        } else {
+            log.info("No products found for the given criteria.");
+            return Collections.emptyList();
+        }
     }
+
 
    private Set<String> generateNGrams(String input, int n) {
         Set<String> ngrams = new HashSet<>();
@@ -255,14 +289,14 @@ public class ProductsServices implements productServices {
 
 
     @Override
-    public List<Product> searchResults(String keyword, String category) {
+    public List<ProductResponse> searchResults(String keyword, String category) {
         if(keyword == null || keyword.isBlank()) {
             return null;
         }
         if(category == null || category.isBlank()) {
-            category = "";
+            category = null;
         }
-        List<Product> productsList = productsRepo.findProductsByRegex(keyword,category);
+        List<ProductResponse> productsList = new ArrayList<>();
 
         List<Product> products = productsRepo.findProductsByRegex(keyword,category);
                 products.forEach(product -> {
@@ -279,7 +313,7 @@ public class ProductsServices implements productServices {
                 if(product.getSalePrice() != 0){
                     response.setSalePrice(product.getSalePrice());
                 }
-                productsList.add(product);
+                productsList.add(response);
         });
 
 
@@ -288,12 +322,19 @@ public class ProductsServices implements productServices {
 
 
     @Override
+    @Transactional
     public String addReview(ReviewRequest request) {
         var product = productsRepo.findByIdentifier(request.getProductId()).orElseThrow(()-> new RuntimeException("product not found"));
+
+        boolean deleteResponse = deleteFiles(product);
+        if(!deleteResponse){
+            throw new RuntimeException("error deleting files");
+        }
         var customer = customerServices.getCustomer(request.getEmail());
         var review = Review.builder()
                 .product(product)
                 .rating(request.getRating())
+                .headline(request.getHeadline())
                 .review(request.getReview())
                 .customer(customer)
                 .date(new Date())
@@ -311,9 +352,13 @@ public class ProductsServices implements productServices {
         var response = new ArrayList<ReviewRequest>();
         reviews.forEach(review -> {
             var reviewRequest = ReviewRequest.builder()
-                    .email(review.getCustomer().getUser().getEmail())
+                    .firstName(review.getCustomer().getUser().getFirstName())
+                    .lastName(review.getCustomer().getUser().getLastName())
+                    .date(review.getDate())
+                    .ProfileIconId(review.getCustomer().getUser().getImageId())
                     .rating(review.getRating())
                     .review(review.getReview())
+                    .headline(review.getHeadline())
                     .build();
             response.add(reviewRequest);
         });
@@ -329,19 +374,31 @@ public class ProductsServices implements productServices {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public String deleteProduct(String productId) {
-       return null;
-    }
 
     @Override
-    public ProductResponse getProductById(String productId) {
-        return null;
-    }
+    public String updateProduct(productsDto request, String productId, List<MultipartFile> images) {
+        var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setCategory(request.getCategory());
+        product.setRegularPrice(request.getRegularPrice());
+        product.setBrand(request.getBrand());
+        product.setStock(request.getStock());
+        product.setProductTypeTags(request.getProductTypeTags());
+        product.setSalePrice(request.getSalePrice() !=0?request.getSalePrice():0);
+        product.setImages(new ArrayList<>());
+        product.setThumbnail(null);
+        Product product1 = saveImages(resourceDetailsTdo.builder().image(images).build(),product);
+        try {
+            productsRepo.save(product1);
+            return "success";
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return "error";
+        }
 
-    @Override
-    public ProductResponse updateProduct(ProductRequest request, String productId) {
-        return null;
+
+
     }
 
     @Override
@@ -360,7 +417,7 @@ public class ProductsServices implements productServices {
                     Customer customer = item.getCart().getCustomer();
                     userEntity user = customer.getUser();
                     eventPublisher.publishEvent(new MessageEmitter(item.getProduct().getName()+ " is no longer available And hasBeen Moved To WishList" +
-                            "You will Be Notified If Its Available Again", MessageAction.PRODUCT_REMOVED, MessageStatus.PENDING, user));
+                            "You will Be Notified If Its Available Again", MessageAction.PRODUCT_REMOVED, MessageStatus.UNSEEN, user));
 
                 });
             });
@@ -375,6 +432,7 @@ public class ProductsServices implements productServices {
         var cartItems = cartItemsRepo.findAllByProductIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
         for(Items item:cartItems){
             Customer customer = item.getCart().getCustomer();
+            userEntity user = customer.getUser();
             log.info("item deleted");
             Cart cart = customer.getCart();
             WishList wishList = customer.getWishList();
@@ -383,10 +441,135 @@ public class ProductsServices implements productServices {
             cartItemsRepo.delete(item);
             cartRepo.save(cart);
             wishListRepo.save(wishList);
+            eventPublisher.publishEvent(new MessageEmitter(item.getProduct().getName()+ " is no longer available And hasBeen Moved To WishList" +
+                    "You will Be Notified If Its Available Again", MessageAction.PRODUCT_REMOVED, MessageStatus.UNSEEN, user));
 
         }
         return "success";
     }
+
+    public productsDto getEditProductDetails(String productId){
+        var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
+        var attributes = specialAttributesRepo.findByProductId(product.getId());
+        var extraAttributes = productExtraAttributesRepo.findById(product.getExtraAttributesId()).orElseThrow(()-> new RuntimeException("product not found"));
+        return productsDto.builder()
+                .name(product.getName())
+                .description(product.getDescription())
+                .category(product.getCategory())
+                .regularPrice(product.getRegularPrice())
+                .brand(product.getBrand())
+                .stock(product.getStock())
+                .productTypeTags(product.getProductTypeTags())
+                .salePrice(product.getSalePrice())
+//                .images(FileManagerproduct.getImages().stream().map(resourceDetails::getUrl).toList())
+//                .extraAttributes(extraAttributes.getExtraAttributes())
+                .build();
+    }
+
+    public String createProductSales(Product product){
+
+        SalesData salesData = SalesData.builder()
+                .product(product)
+                .vendor(product.getVendor())
+                .revenue(0)
+                .salesHistory(new ArrayList<>())
+                .build();
+        salesRepo.save(salesData);
+        return "success";
+    }
+
+
+    @Override
+    public ProductResponse getProduct(String productId) {
+        var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
+
+
+        var response = ProductResponse.builder()
+                .name(product.getName())
+                .description(product.getDescription())
+                .category(product.getCategory())
+                .regularPrice(product.getRegularPrice())
+                .imageURL(parseImageURL(product.getImages()))
+                .brand(product.getBrand())
+                .vendorName(product.getVendor().getVendorCompanyName())
+                .productId(product.getIdentifier())
+                .numberOfRatings(product.getReviews().size())
+                .rating(product.getAverageRating())
+                .stock(product.getStock())
+                .isPublished(product.isEnabled())
+                .salePrice(product.getSalePrice())
+                .build();
+        if(product.getSalePrice() != 0){
+            response.setSalePrice(product.getSalePrice());
+        }
+        return response;
+    }
+
+    @Override
+    public List<MetaAttribute> getProductAttributesList() {
+
+        return Arrays.asList(MetaAttribute.values());
+    }
+
+    public List<ProductMinorDetails> getVendorProducts(String email){
+        var vendor = vendorRepo.findByUserEmail(email).orElseThrow(()-> new RuntimeException("vendor not found"));
+        List<ProductMinorDetails> products = new ArrayList<>();
+        productsRepo.findAllByVendorId(vendor.getId()).forEach(product -> {
+            var response = ProductMinorDetails.builder()
+                    .productId(product.getIdentifier())
+                    .name(product.getName())
+//                    .imageURL(parseImageURL(product.getImages().get(0)))
+                    .regularPrice(product.getRegularPrice())
+                    .salePrice(product.getSalePrice())
+                    .innDate(product.getProductInventory().getInDate())
+                    .stock(product.getStock())
+                    .build();
+            products.add(response);
+        });
+        return products;
+
+    }
+
+    public ProductMajorDetails getProductMajorDetails(String productId){
+
+
+           var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
+
+            var attributes = specialAttributesRepo.findByProductId(product.getId());
+        var salesData = salesRepo.findByProductIdentifier(product.getIdentifier());
+        return ProductMajorDetails.builder()
+                .productId(product.getIdentifier())
+                .name(product.getName())
+                .imageURL(parseImageURL(product.getImages()))
+                .regularPrice(product.getRegularPrice())
+                .salePrice(product.getSalePrice())
+                .rating(product.getAverageRating())
+                .numberOfRatings(product.getReviews().size())
+                .isPublished(product.isEnabled())
+                .stock(product.getStock())
+                .metaAttribute( attributes ==null ? MetaAttribute.NOT_SPONSORED : attributes.getAttributes())
+                .revenue(salesData.getRevenue())
+                .productSold(salesData.getSalesHistory().size())
+                .innDate(product.getProductInventory().getInDate())
+                .build();
+    }
+
+
+
+    @Override
+    @Transactional
+    public String updateProductMajorDetails(ProductRequest request, String productId) {
+        var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
+        MetaAttributes attributes = specialAttributesRepo.findByProductId(product.getId());
+        product.setRegularPrice(request.getRegularPrice());
+        product.setSalePrice(request.getSalePrice() != 0 ? request.getSalePrice() : 0);
+        product.setStock(request.getQuantity());
+        attributes.setAttributes(request.getAttributes());
+        specialAttributesRepo.save(attributes);
+        productsRepo.save(product);
+        return "success";
+    }
+
 
     private List<String> parseImageURL(List<resourceDetails> images){
         List<String> imageURL = new ArrayList<>();

@@ -2,6 +2,7 @@ package com.Onestop.ecommerce.Controller.vendor;
 
 import com.Onestop.ecommerce.Dto.CustomerDto.AddressRequest;
 import com.Onestop.ecommerce.Service.VendorServices.VendorServices;
+import com.Onestop.ecommerce.Service.products.ProductsServices;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 public class VendorController {
 
     private final VendorServices services;
+
+    private final ProductsServices productsServices;
 
      @PostMapping("/register")
     public ResponseEntity<?> authenticate(@RequestBody VendorRequest request) {
@@ -41,6 +44,16 @@ public class VendorController {
 
 
 
+    }
+
+    @GetMapping("/getVendorProducts")
+    public ResponseEntity<?> getProductMajorDetails() {
+        var userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            return ResponseEntity.status(200).body(productsServices.getVendorProducts(userName));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/delete")

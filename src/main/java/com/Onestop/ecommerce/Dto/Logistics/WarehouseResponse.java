@@ -17,5 +17,6 @@ public class WarehouseResponse {
     private Long contactNumber;
     private String email;
     private Long capacity;
+    private Long storageLeft;
     private List<InventoryResponse> inventoryResponseList;
 }

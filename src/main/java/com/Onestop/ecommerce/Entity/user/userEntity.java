@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -33,6 +34,10 @@ public class userEntity implements UserDetails {
     private String lastName;
     @Column(length = 60)
     private String password;
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date DateOfBirth;
+    private Long phoneNumber;
+
     @Column(unique = true )
     private String email;
     @ManyToMany(fetch = FetchType.EAGER)

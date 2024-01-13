@@ -1,5 +1,6 @@
 package com.Onestop.ecommerce.Controller.productController;
 
+import com.Onestop.ecommerce.Entity.products.MetaAttribute;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,7 +11,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class ProductRequest {
-    private Long userId;
     private Long productId;
-    private Long quantity;
+    private Integer quantity;
+    private MetaAttribute attributes;
+    private double regularPrice;
+    private double salePrice;
+
 }

@@ -1,13 +1,16 @@
 package com.Onestop.ecommerce.Entity.Logistics;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.Onestop.ecommerce.Entity.orders.Orders;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
 
 @Entity
 @Data
@@ -18,5 +21,33 @@ public class OrderShippment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long Id;
+
+    private String trackingNumber;
+    private String carrier;
+    private ShipmentMethod shippingMethod;
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date date;
+    private String OrderStatus;
+    @OneToMany(mappedBy = "orderShippment", cascade = CascadeType.ALL)
+    private List<ShipmentUpdates> shipmentUpdates = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    private Orders orders;
+
+    @PrePersist
+    public void prePersist(){
+        this.trackingNumber = generateTrackingId();
+    }
+
+
+        public String generateTrackingId() {
+            Random random = new Random();
+            StringBuilder trackingId = new StringBuilder();
+            for (int i = 0; i < 8; i++) {
+                trackingId.append(random.nextInt(10)); // Generates a random digit (0-9)
+            }
+            return trackingId.toString();
+        }
 
 }

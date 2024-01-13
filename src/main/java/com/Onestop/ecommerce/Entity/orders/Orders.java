@@ -60,7 +60,7 @@ public class Orders {
 
 
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "payment_id")
     private Cards paymentCard;
     @Enumerated(EnumType.STRING)

@@ -40,15 +40,17 @@ public class securityConfig{
                         .requestMatchers("/api/v1/user/getprofileicon/**").permitAll()
                         .requestMatchers("/api/v1/product/**").permitAll()
                         .requestMatchers("/api/v1/logistic/**").permitAll()
+                        .requestMatchers("/","/ws/**").permitAll()
                         .anyRequest().permitAll()
                 )
 //
                 .cors((cors)->{
                         cors.configurationSource((request)->{
                         var cors1 = new CorsConfiguration();
-                        cors1.addAllowedOrigin("*");
+                        cors1.addAllowedOrigin("http://localhost:5173");
                         cors1.addAllowedMethod("*");
                         cors1.addAllowedHeader("*");
+                        cors1.setAllowCredentials(true);
                         return cors1;
                     });
                 })
