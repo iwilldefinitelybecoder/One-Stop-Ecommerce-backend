@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface SalesHistoryRepo extends JpaRepository<SalesHistory, Long> {
     List<SalesHistory> findBySalesDataId(Long id);
-    List<SalesHistory> findBySalesDataVendorUserEmail(String email);
+    List<SalesHistory> findAllBySalesDataVendorUserEmail(String email);
     List<SalesHistory> findBySalesDataProductIdentifier(String identifier);
     List<SalesHistory> findBySalesDataIdentifier(String identifier);
 }

@@ -4,26 +4,35 @@ import com.Onestop.ecommerce.Controller.vendor.VendorLoginRequest;
 import com.Onestop.ecommerce.Controller.vendor.VendorLoginResponse;
 import com.Onestop.ecommerce.Controller.vendor.VendorRequest;
 import com.Onestop.ecommerce.Dto.CustomerDto.AddressRequest;
+import com.Onestop.ecommerce.Dto.VendorDto.DashboardData;
 import com.Onestop.ecommerce.Dto.VendorDto.VendorProductList;
 import com.Onestop.ecommerce.Dto.productsDto.ProductResponse;
 import com.Onestop.ecommerce.Entity.Logistics.WareHouse;
 import com.Onestop.ecommerce.Entity.Role;
+import com.Onestop.ecommerce.Entity.orders.OrderStatus;
+import com.Onestop.ecommerce.Entity.products.Review;
+import com.Onestop.ecommerce.Entity.vendor.SalesData;
+import com.Onestop.ecommerce.Entity.vendor.SalesHistory;
 import com.Onestop.ecommerce.Entity.vendor.Vendor;
+import com.Onestop.ecommerce.Repository.CustomerRepo.OrdersRepo.OrderItemsRepo;
+import com.Onestop.ecommerce.Repository.CustomerRepo.OrdersRepo.OrdersRepo;
 import com.Onestop.ecommerce.Repository.LogisticsRepo.InventoryRepo;
 import com.Onestop.ecommerce.Repository.LogisticsRepo.WareHouseRepo;
+import com.Onestop.ecommerce.Repository.VendorRepo.SalesHistoryRepo;
+import com.Onestop.ecommerce.Repository.VendorRepo.SalesRepo;
 import com.Onestop.ecommerce.Repository.VendorRepo.VendorRepository;
 import com.Onestop.ecommerce.Repository.products.ReviewsRepo;
 import com.Onestop.ecommerce.Repository.products.productsRepo;
 import com.Onestop.ecommerce.Repository.products.resourceRepo;
 import com.Onestop.ecommerce.Repository.userRepo.RoleRepository;
 import com.Onestop.ecommerce.Repository.userRepo.UserRepository;
+import com.Onestop.ecommerce.utils.DateObject;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +48,11 @@ public class VendorServices implements VendorService {
     private final InventoryRepo inventoryRepo;
     private final ReviewsRepo reviewsRepo;
     private final resourceRepo resourceRepo;
+    private final SalesRepo salesrepo;
+    private final SalesHistoryRepo salesHistoryRepo;
+    private final OrderItemsRepo orderItemsRepo;
+
+
 
     public String register(VendorRequest request) {
 
@@ -150,4 +164,34 @@ public class VendorServices implements VendorService {
     }
 
 
+    public DashboardData getDashboardData(String productId,String userName) {
+        var salesData = salesrepo.findByVendorUserEmail(userName);
+        var history = salesHistoryRepo.findAllBySalesDataVendorUserEmail(userName);
+        var orderItems = orderItemsRepo.findAllByVendorUserEmail(userName);
+        var reviews = reviewsRepo.findAllByProductVendorUserEmail(userName);
+        var dashboardDate = DashboardData.builder();
+        List<DateObject> salesDate = new ArrayList<>();
+        for(SalesHistory history1 : history){
+            salesDate.add(new DateObject(history1.getDate(),history1.getCount()));
+        }
+        List<Date> pendingOrders = orderItems.stream().filter(orderItems1 -> {
+            OrderStatus status = orderItems1.getStatus();
+            return !(OrderStatus.DELIVERED.equals(status) || OrderStatus.CANCELLED.equals(status));
+        }).map(item->item.getOrders().getOrderDate())
+                .sorted(Comparator.comparing(Date::getTime))
+                .toList();
+        if(!pendingOrders.isEmpty()){
+            dashboardDate.from(pendingOrders.get(0));
+            dashboardDate.to(pendingOrders.get(pendingOrders.size() - 1));
+
+        }
+        dashboardDate.pendingOrders(pendingOrders.size());
+        var earnings = salesData.stream().mapToDouble(SalesData::getRevenue).sum();
+        dashboardDate.earnings(earnings);
+
+        var vendorRating = reviews.stream().mapToDouble(Review::getRating).average().orElse(0.0);
+        dashboardDate.vendorRatings(vendorRating);
+        dashboardDate.salesData(salesDate);
+        return dashboardDate.build();
+    }
 }

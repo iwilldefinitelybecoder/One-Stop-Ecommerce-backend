@@ -24,7 +24,7 @@ public class productsDto {
     private String category;
     private Integer stock;
     private double regularPrice;
-    private List<String> productTypeTags;
+    private List<String> tags;
     private double salePrice;
     private String brand;
     private String wareHouseId;

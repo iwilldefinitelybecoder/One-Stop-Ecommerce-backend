@@ -37,6 +37,8 @@ public class CustomWebSocketHandler extends TextWebSocketHandler {
 
     private final SimpMessagingTemplate messageTemplate;
 
+
+
     @EventListener
     public void handelPrivateMessageEvent(SocketMessage privateMessageEvent){
         String userId = privateMessageEvent.getUserId();

@@ -8,7 +8,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Entity
@@ -31,8 +33,12 @@ public class Review {
     @JoinColumn(name = "user_purchase_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FK_purchase_id"))
     private UserPurchaseHistory userPurchaseHistory;
 
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL)
+    private List<ReviewImageResource> images = new ArrayList<>();
+
     private String review;
     private int rating;
+    @Temporal(TemporalType.TIMESTAMP)
     private Date date;
     private String headline;
 

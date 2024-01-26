@@ -93,4 +93,18 @@ public class VendorController {
         }
 
     }
+
+    @GetMapping("/getDashboardData")
+    public ResponseEntity<?> getDashBoardData(@RequestParam(value = "productId",required = false) String productId){
+        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        try
+        {
+            return ResponseEntity.status(HttpStatus.OK).body(services.getDashboardData(productId,userName));
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+
+    }
+
+
 }

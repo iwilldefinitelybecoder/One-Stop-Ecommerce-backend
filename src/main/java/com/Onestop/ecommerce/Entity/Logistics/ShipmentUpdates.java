@@ -16,7 +16,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ShipmentUpdates {
+public class  ShipmentUpdates {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long Id;

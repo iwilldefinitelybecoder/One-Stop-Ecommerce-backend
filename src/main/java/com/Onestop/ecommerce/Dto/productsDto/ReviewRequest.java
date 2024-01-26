@@ -14,6 +14,7 @@ import java.util.Date;
 @Builder
 public class ReviewRequest {
     private String productId;
+    private String purchaseId;
     private String review;
     private int rating;
     private String headline;

@@ -16,5 +16,6 @@ public class ProductInfo {
     private Double productTotal;
     private List<String> productImageURL;
     private String productId;
+    private Integer stock;
 
 }

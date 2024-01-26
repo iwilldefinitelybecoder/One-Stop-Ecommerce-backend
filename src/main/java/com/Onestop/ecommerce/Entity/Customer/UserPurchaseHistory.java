@@ -1,5 +1,6 @@
 package com.Onestop.ecommerce.Entity.Customer;
 
+import com.Onestop.ecommerce.Entity.orders.Orders;
 import com.Onestop.ecommerce.Entity.products.Product;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 
+import java.util.Date;
 import java.util.UUID;
 
 @Entity
@@ -15,7 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserPurchaseHistory {
+public class  UserPurchaseHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,6 +36,13 @@ public class UserPurchaseHistory {
     private double total;
     private double price;
     private String identifier;
+
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    private Orders orders;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date purchaseDate;
 
     @PrePersist
     public void prePersist(){

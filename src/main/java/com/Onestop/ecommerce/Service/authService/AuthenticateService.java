@@ -120,8 +120,15 @@ public class AuthenticateService {
     }
 
     public userEntity getUser(String email) {
-        return userRespository.findByEmail(email).orElseThrow();
+        var user = userRespository.findByEmail(email);
+        if(user.isEmpty()){
+            return null;
+        }
+        return user.get();
+
     }
+
+
 
     public String resetPassword(String email, String password,String token) {
     log.info("Resetting password for user {}",token);
@@ -163,6 +170,14 @@ public class AuthenticateService {
         roleRepository.save(role1);
     }
 
+    public String validateOldPassword(String userName,String password) {
+        var user = userRespository.findByEmail(userName).orElseThrow(()-> new RuntimeException("user Not found"));
+
+        if(passwordEncoder.matches(password,user.getPassword())){
+            return "success";
+        }
+        return "failure";
     }
+}
 
 

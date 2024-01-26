@@ -5,13 +5,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class ProductOrderDetails {
-    private String productId;
-    private Integer quantity;
-    private Double price;
+public class TrackingData {
+
+    private Date timestamp;
+    private String action;
+    private String place;
 
 }

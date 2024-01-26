@@ -62,6 +62,7 @@ public class CartServices implements CartService {
                             .productName(product.getName())
                             .regularPrice(product.getRegularPrice())
                             .salePrice(product.getSalePrice())
+                            .stock(cartItem.getProduct().getStock())
                             .productQuantity(cartItem.getQuantity())
                             .productId(product.getIdentifier())
                             .productImageURL(parseImageURL(product.getImages()))
@@ -73,12 +74,12 @@ public class CartServices implements CartService {
 
                 .totalItems(cartItems.size())
                 .productInfo(info)
-                .tax(info.size() * 0.18)
-                .shippingCharges(info.size() * 0.05)
+                .tax(cart.getCartTotal() * 0.03)
+                .shippingCharges(cart.getCartTotal() * 0.02)
                 .discount(0.0)
+                .wallet(customer.getWallet())
                 .cartTotal(cart.getCartTotal())
-                .grandTotal(cart.getCartTotal() + (info.size() * 0.18) + (info.size() * 0.05))
-
+                .grandTotal(cart.getCartTotal() + (cart.getCartTotal() * 0.03) + (cart.getCartTotal() * 0.02))
                 .cartId(cart.getIdentifier())
                 .build();
         };

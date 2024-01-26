@@ -56,8 +56,8 @@ public class MessageController {
     }
 
 
-    @PutMapping("/update")
-    public ResponseEntity<?> updateMessage(@RequestParam ("messageId") List<String> messageId) {
+    @PostMapping("/update")
+    public ResponseEntity<?> updateMessage(@RequestBody List<String> messageId) {
         try {
             return ResponseEntity.status(HttpStatus.OK).body(messageService.updateMessage(messageId));
         } catch (Exception e) {

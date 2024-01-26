@@ -26,7 +26,7 @@ public class WishList {
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Collection<Product> product = new ArrayList<>();
 
     private String identifier;

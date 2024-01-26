@@ -20,6 +20,7 @@ public class CartItemsResponse {
     private Double discount;
     private Double shippingCharges;
     private Double tax;
+    private Double wallet;
     private Double grandTotal;
    private String subTotal;
 

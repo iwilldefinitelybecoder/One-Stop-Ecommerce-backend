@@ -1,6 +1,7 @@
 package com.Onestop.ecommerce.Repository.CustomerRepo.OrdersRepo;
 
 import com.Onestop.ecommerce.Entity.orders.Orders;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,4 +16,7 @@ public interface OrdersRepo extends JpaRepository<Orders,Long> {
     Optional<Orders> findByIdentifier(String orderIdentifier);
     @Query("select o from Orders o  JOIN o.customer c JOIN c.user u where u.email = :email")
     Optional<List<Orders>> findAllByUserEmail(@Param("email") String email);
+
+    Optional<List<Orders>> findAlByCustomerUserEmail(String userName);
+
 }

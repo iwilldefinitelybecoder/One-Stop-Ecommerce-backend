@@ -28,6 +28,7 @@ public class OrderShippment {
     @Temporal(TemporalType.TIMESTAMP)
     private Date date;
     private String OrderStatus;
+
     @OneToMany(mappedBy = "orderShippment", cascade = CascadeType.ALL)
     private List<ShipmentUpdates> shipmentUpdates = new ArrayList<>();
 
@@ -37,7 +38,7 @@ public class OrderShippment {
 
     @PrePersist
     public void prePersist(){
-        this.trackingNumber = generateTrackingId();
+
     }
 
 

@@ -41,7 +41,7 @@ public class Items {
 
     @PreUpdate
     public void performPreUpdateActions(){
-       ItemTotal();
+
     }
 
     private void uniqueIdentifier(){
@@ -50,11 +50,18 @@ public class Items {
         }
     }
 
+    public void updateItemTotals(){
+        ItemTotal();
+    }
 
 
     private void ItemTotal(){
         if(this.product != null){
-            this.totalPrice = this.quantity * this.product.getSalePrice();
+            if(this.product.getSalePrice() != 0){
+                this.totalPrice = this.quantity * this.product.getSalePrice();
+            }else {
+                this.totalPrice = this.quantity * this.product.getRegularPrice();
+            }
         }
     }
 

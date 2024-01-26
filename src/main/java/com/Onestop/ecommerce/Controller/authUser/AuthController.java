@@ -44,6 +44,9 @@ public class AuthController {
 
         var response = services.register(request);
         var user = services.getUser(request.getEmail());
+        if(user == null){
+            return ResponseEntity.status(400).body("USER_NOT_FOUND");
+        }
         try {
             eventPublisher.publishEvent(new VerifyTokenEmmitter(user, applicationUrl(servletRequest)));
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -151,9 +154,25 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error in updating password");
 
     }
+
+    @GetMapping("/validateOldPassword")
+    public ResponseEntity<?> validateOldPassword(@RequestParam("oldPassword") String password) {
+        var userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        try{
+
+            return ResponseEntity.status(HttpStatus.OK).body( services.validateOldPassword(userName,password));
+        }catch (Exception e){
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+
+
+    }
+
     @PostMapping("/updatePassword")
     public ResponseEntity<?> updatePassword(@RequestBody UpdatePasswordRequest request) {
-        var result = services.updatePassword(request.getEmail(),request.getPassword(),request.getOldPassword());
+        var userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        var result = services.updatePassword(userName,request.getNewPassword(),request.getOldPassword());
         if(result.equals("SUCCESS")){
             return ResponseEntity.status(HttpStatus.OK).body("Password Updated");
 

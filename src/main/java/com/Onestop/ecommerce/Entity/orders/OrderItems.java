@@ -39,6 +39,10 @@ public class OrderItems {
     private Double itemTotal;
     private Double itemPrice;
 
+    @ManyToOne
+    @JoinColumn(name = "orders_id")
+    private Orders orders;
+
 
 
     @PrePersist

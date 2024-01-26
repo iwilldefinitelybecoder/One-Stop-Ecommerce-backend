@@ -45,7 +45,7 @@ public class Orders {
     private double total;
     private double shippingTotal;
     private double taxTotal;
-    private Long grandTotal;
+    private double grandTotal;
 
     @ManyToOne
     @JoinColumn(name = "shipping_address_id")
@@ -83,7 +83,7 @@ public class Orders {
     @JoinColumn(name = "ware_house_id",unique = false)
     private WareHouse wareHouse;
 
-    @Transient
+
     @Temporal(TemporalType.TIMESTAMP)
     private Date ReplacementLastDate;
 
@@ -94,7 +94,7 @@ public class Orders {
             this.identifier = UUID.randomUUID().toString();
         }
         orderSummary();
-        this.generatedOrderId = generateOrderId(this.Id);
+
     }
 
     @PreUpdate

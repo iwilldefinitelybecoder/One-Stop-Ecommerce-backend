@@ -18,6 +18,7 @@ import com.Onestop.ecommerce.Events.Emmitter.DisableProductEmmitter;
 import com.Onestop.ecommerce.Events.Emmitter.MessageEmitter;
 import com.Onestop.ecommerce.Repository.CustomerRepo.CartItemsRepo;
 import com.Onestop.ecommerce.Repository.CustomerRepo.CartRepo;
+import com.Onestop.ecommerce.Repository.CustomerRepo.PurchaseHistory;
 import com.Onestop.ecommerce.Repository.CustomerRepo.WishListRepo;
 import com.Onestop.ecommerce.Repository.LogisticsRepo.InventoryRepo;
 import com.Onestop.ecommerce.Repository.LogisticsRepo.WareHouseRepo;
@@ -25,10 +26,13 @@ import com.Onestop.ecommerce.Repository.VendorRepo.SalesRepo;
 import com.Onestop.ecommerce.Repository.VendorRepo.VendorRepository;
 import com.Onestop.ecommerce.Repository.products.*;
 import com.Onestop.ecommerce.Service.Customer.CustomerServices;
+import com.Onestop.ecommerce.utils.ImplFunction;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -90,19 +94,31 @@ public class ProductsServices implements productServices {
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
+
+    @Autowired
+    private ReviewResourceRepo reviewResourceRepo;
+    @Autowired
+    private PurchaseHistory purchaseHistory;
+
     private Vendor getVendor(String email){
         return vendorRepo.findByUserEmail(email).orElseThrow(()-> new RuntimeException("vendor not found"));
     }
 
     @Override
     @Transactional
-    public String saveProduct(productsDto request,resourceDetailsTdo images,String email,Map<String,Object> extraAttributess) {
+    public String saveProduct(productsDto request,resourceDetailsTdo images,String email) {
         var vendor = getVendor(email);
-        var extraAttributes = ProductExtraAttributes.builder()
-                .extraAttributes(extraAttributess)
-                .productId(null)
-                .build();
-        String newAttributeId = productExtraAttributesRepo.save(extraAttributes).getId();
+//        var extraAttributes = ProductExtraAttributes.builder()
+//                .extraAttributes(extraAttributess)
+//                .productId(null)
+//                .build();
+//        String newAttributeId = productExtraAttributesRepo.save(extraAttributes).getId();
+        List<Tags> newTags = new ArrayList<>();
+        for(String tag: request.getTags()){
+            var tag1 = tagsRepo.findByName(tag);
+            log.info(tag1.getName());
+             newTags.add(tag1);
+        }
         WareHouse wareHouse = wareHouseRepo.findByIdentifier(request.getWareHouseId()).orElseThrow(()->{throw new RuntimeException("No warehouse exists");});
         var product = Product.builder()
                 .name(request.getName())
@@ -110,12 +126,13 @@ public class ProductsServices implements productServices {
                 .category(request.getCategory())
                 .stock(request.getStock())
                 .vendor(vendor)
+                .averageRating(0.0)
                 .brand(request.getBrand())
                 .wareHouse(wareHouse)
                 .reviews(new ArrayList<>())
-                .extraAttributesId(newAttributeId)
+//                .extraAttributesId(newAttributeId)
                 .regularPrice(request.getRegularPrice())
-                .productTypeTags(request.getProductTypeTags())
+                .tags(newTags)
                 .salePrice(request.getSalePrice() !=0?request.getSalePrice():0)
                 .build();
         var inventoryProduct = ProductInventory.builder()
@@ -128,11 +145,19 @@ public class ProductsServices implements productServices {
         product.setProductInventory(inventoryProduct);
         Product product1 = saveImages(images,product);
         wareHouse.getInventory().add(inventoryProduct);
+        wareHouse.setCapacity(wareHouse.getCapacity() - inventoryProduct.getStock());
         createProductSales(product);
+        var meta = MetaAttributes.builder()
+                .product(product1)
+                .attributes(MetaAttribute.NEW_PRODUCT)
+                .isActive(true)
+                .build();
+
         try {
             productsRepo.save(product1);
             inventoryRepo.save(inventoryProduct);
             wareHouseRepo.save(wareHouse);
+            specialAttributesRepo.save(meta);
             return product.getId().toString();
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -179,6 +204,47 @@ public class ProductsServices implements productServices {
         if (success) {
             log.info("success");
             return product;
+        }
+        else {
+            log.info("error");
+            return null;
+        }
+    }
+
+    public Review saveReviewImages(List<MultipartFile> images, Review review) {
+        boolean success = true; // Initialize a boolean variable to track success
+        List<ReviewImageResource> ResourceDetails = new ArrayList<>();
+        for (MultipartFile image : images) {
+            try {
+                HashMap response = SaveImageTOFs(image);
+                if (response.get("originalFileName") != null && response.get("destination") != null) {
+
+                    var resource = ReviewImageResource.builder()
+                            .name(response.get("originalFileName").toString())
+                            .url(response.get("newFileName").toString())
+                            .review(review)
+                            .build();
+
+                    reviewResourceRepo.save(resource);
+                    ResourceDetails.add(resource);
+
+                } else {
+                    // Handle the case where image details are missing or invalid
+                    success = false;
+
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                success = false; // Set success to false in case of an exception
+
+            }
+        }
+        review.setImages(ResourceDetails);
+
+
+        if (success) {
+            log.info("success");
+            return review;
         }
         else {
             log.info("error");
@@ -249,12 +315,10 @@ public class ProductsServices implements productServices {
         if (category == null || category.isBlank()) {
             category = null;
         }
-        log.info("keyword: {}", keyword);
         List<Product> products = productsRepo.findProductsByRegex(keyword, category);
         if (!products.isEmpty()) {
             return products.stream().map(Product::getName).toList();
         } else {
-            log.info("No products found for the given criteria.");
             return Collections.emptyList();
         }
     }
@@ -289,7 +353,7 @@ public class ProductsServices implements productServices {
 
 
     @Override
-    public List<ProductResponse> searchResults(String keyword, String category) {
+    public List<ProductResponse> searchResults(String keyword, String category, Pageable pageable) {
         if(keyword == null || keyword.isBlank()) {
             return null;
         }
@@ -298,7 +362,7 @@ public class ProductsServices implements productServices {
         }
         List<ProductResponse> productsList = new ArrayList<>();
 
-        List<Product> products = productsRepo.findProductsByRegex(keyword,category);
+        Page<Product> products = productsRepo.findProductsByRegexPageable(keyword,category,pageable);
                 products.forEach(product -> {
                 var response = ProductResponse.builder()
                         .name(product.getName())
@@ -323,25 +387,35 @@ public class ProductsServices implements productServices {
 
     @Override
     @Transactional
-    public String addReview(ReviewRequest request) {
+    public String addReview(ReviewRequest request, List<MultipartFile> images) {
         var product = productsRepo.findByIdentifier(request.getProductId()).orElseThrow(()-> new RuntimeException("product not found"));
-
-        boolean deleteResponse = deleteFiles(product);
-        if(!deleteResponse){
-            throw new RuntimeException("error deleting files");
-        }
         var customer = customerServices.getCustomer(request.getEmail());
-        var review = Review.builder()
-                .product(product)
-                .rating(request.getRating())
-                .headline(request.getHeadline())
-                .review(request.getReview())
-                .customer(customer)
-                .date(new Date())
-                .build();
-        product.getReviews().add(review);
-        productsRepo.save(product);
-        return "success";
+        var histroy = purchaseHistory.findByIdentifier(request.getPurchaseId());
+        Review review = null;
+        if(reviewsRepo.findByUserPurchaseHistoryId(histroy.getId()) == null) {
+            review = Review.builder()
+                    .product(product)
+                    .rating(request.getRating())
+                    .headline(request.getHeadline())
+                    .review(request.getReview())
+                    .userPurchaseHistory(histroy)
+                    .customer(customer)
+                    .date(new Date())
+                    .build();
+            review = saveReviewImages(images, review);
+            product.getReviews().add(review);
+            reviewsRepo.save(review);
+            productsRepo.save(product);
+            updateProductRating(product);
+            return "success";
+        }
+        return "REVIEW_EXIST";
+    }
+
+    private void updateProductRating(Product product){
+        var review  = reviewsRepo.findAllByProduct(product);
+        var averageRating = review.stream().mapToDouble(review1-> review1.getRating()).average().orElse(0.0);
+        product.setAverageRating(averageRating);
     }
 
 
@@ -350,7 +424,7 @@ public class ProductsServices implements productServices {
     public List<ReviewRequest> getAllProductReviews(String productId) {
         var reviews = reviewsRepo.findAllByProductIdentifier(productId);
         var response = new ArrayList<ReviewRequest>();
-        reviews.forEach(review -> {
+        reviews.stream().sorted(Comparator.comparing(Review::getDate).reversed()).forEach(review -> {
             var reviewRequest = ReviewRequest.builder()
                     .firstName(review.getCustomer().getUser().getFirstName())
                     .lastName(review.getCustomer().getUser().getLastName())
@@ -366,11 +440,34 @@ public class ProductsServices implements productServices {
     }
 
     @Override
-    public List<Product> getProductAttributes(String attribute) {
-        List<Product> products = specialAttributesRepo.findAllProductByAttributesAndIsActive(attribute,true);
+    public List<ProductResponse> getProductAttributes(MetaAttribute attribute) {
+        log.info( "{}",attribute);
+        List<MetaAttributes> products = specialAttributesRepo.findAllProductByAttributesAndIsActive(attribute,true);
+        List<ProductResponse> productsList = new ArrayList<>();
+        products.forEach(product -> {
+            if(!product.getProduct().isEnabled()){
+                return;
+            }
+            var response = ProductResponse.builder()
+                    .name(product.getProduct().getName())
+                    .description(product.getProduct().getDescription())
+                    .category(product.getProduct().getCategory())
+                    .regularPrice(product.getProduct().getRegularPrice())
+                    .imageURL(parseImageURL(product.getProduct().getImages()))
+                    .productId(product.getProduct().getIdentifier())
+                    .stock(product.getProduct().getStock())
+                    .isPublished(product.getProduct().isEnabled())
+                    .numberOfRatings(product.getProduct().getReviews().size())
+                    .rating(product.getProduct().getAverageRating())
+                    .build();
+            if(product.getProduct().getSalePrice() != 0){
+                response.setSalePrice(product.getProduct().getSalePrice());
+            }
+            productsList.add(response);
+        });
 
-        return products.stream()
-                .sorted((Comparator.comparingDouble(Product::getAverageRating).reversed()))
+        return productsList.stream()
+                .sorted(Comparator.comparingDouble(ProductResponse::getRating).reversed())
                 .collect(Collectors.toList());
     }
 
@@ -378,13 +475,17 @@ public class ProductsServices implements productServices {
     @Override
     public String updateProduct(productsDto request, String productId, List<MultipartFile> images) {
         var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
+        List<Tags> newTags = new ArrayList<>();
+        for(String tag: request.getTags()){
+            newTags.add(tagsRepo.findByName(tag));
+        }
         product.setName(request.getName());
         product.setDescription(request.getDescription());
         product.setCategory(request.getCategory());
         product.setRegularPrice(request.getRegularPrice());
         product.setBrand(request.getBrand());
         product.setStock(request.getStock());
-        product.setProductTypeTags(request.getProductTypeTags());
+        product.setTags(newTags);
         product.setSalePrice(request.getSalePrice() !=0?request.getSalePrice():0);
         product.setImages(new ArrayList<>());
         product.setThumbnail(null);
@@ -441,7 +542,7 @@ public class ProductsServices implements productServices {
             cartItemsRepo.delete(item);
             cartRepo.save(cart);
             wishListRepo.save(wishList);
-            eventPublisher.publishEvent(new MessageEmitter(item.getProduct().getName()+ " is no longer available And hasBeen Moved To WishList" +
+            eventPublisher.publishEvent(new MessageEmitter(item.getProduct().getName()+ " is no longer available And hasBeen Moved To <a href='/user/wishlist'><span> WishList </span></a>"  +
                     "You will Be Notified If Its Available Again", MessageAction.PRODUCT_REMOVED, MessageStatus.UNSEEN, user));
 
         }
@@ -451,6 +552,7 @@ public class ProductsServices implements productServices {
     public productsDto getEditProductDetails(String productId){
         var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
         var attributes = specialAttributesRepo.findByProductId(product.getId());
+        var tags = product.getTags().stream().map(Tags::getName).toList();
         var extraAttributes = productExtraAttributesRepo.findById(product.getExtraAttributesId()).orElseThrow(()-> new RuntimeException("product not found"));
         return productsDto.builder()
                 .name(product.getName())
@@ -459,7 +561,7 @@ public class ProductsServices implements productServices {
                 .regularPrice(product.getRegularPrice())
                 .brand(product.getBrand())
                 .stock(product.getStock())
-                .productTypeTags(product.getProductTypeTags())
+                .tags(tags)
                 .salePrice(product.getSalePrice())
 //                .images(FileManagerproduct.getImages().stream().map(resourceDetails::getUrl).toList())
 //                .extraAttributes(extraAttributes.getExtraAttributes())
@@ -536,6 +638,7 @@ public class ProductsServices implements productServices {
            var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
 
             var attributes = specialAttributesRepo.findByProductId(product.getId());
+            var inventory = inventoryRepo.findByProductIdentifier(productId).orElseThrow(()-> new RuntimeException("inventory notFound"));
         var salesData = salesRepo.findByProductIdentifier(product.getIdentifier());
         return ProductMajorDetails.builder()
                 .productId(product.getIdentifier())
@@ -546,10 +649,10 @@ public class ProductsServices implements productServices {
                 .rating(product.getAverageRating())
                 .numberOfRatings(product.getReviews().size())
                 .isPublished(product.isEnabled())
-                .stock(product.getStock())
+                .stock(inventory.getStock())
                 .metaAttribute( attributes ==null ? MetaAttribute.NOT_SPONSORED : attributes.getAttributes())
                 .revenue(salesData.getRevenue())
-                .productSold(salesData.getSalesHistory().size())
+                .productSold(salesData.getProductSold())
                 .innDate(product.getProductInventory().getInDate())
                 .build();
     }
@@ -561,13 +664,53 @@ public class ProductsServices implements productServices {
     public String updateProductMajorDetails(ProductRequest request, String productId) {
         var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
         MetaAttributes attributes = specialAttributesRepo.findByProductId(product.getId());
+        var inventory = inventoryRepo.findByProductIdentifier(productId).orElseThrow(()-> new RuntimeException("inventory not found"));
+        log.info("{}",request.getAttributes());
+        if(attributes == null){
+            attributes = MetaAttributes.builder()
+                    .product(product)
+                    .attributes(request.getAttributes())
+                    .isActive(true)
+                    .build();
+        }else {
+            attributes.setAttributes(request.getAttributes());
+        }
+
         product.setRegularPrice(request.getRegularPrice());
         product.setSalePrice(request.getSalePrice() != 0 ? request.getSalePrice() : 0);
         product.setStock(request.getQuantity());
-        attributes.setAttributes(request.getAttributes());
+        inventory.setStock(request.getQuantity());
+        inventoryRepo.save(inventory);
         specialAttributesRepo.save(attributes);
         productsRepo.save(product);
         return "success";
+    }
+
+    @Override
+    public DetailedProductRating getProductDetailReview(String productId) {
+        List<Review> reviews  = reviewsRepo.findAllByProductIdentifier(productId);
+        return DetailedProductRating.builder()
+                .ratingData(processRatingData(reviews))
+                .averageRating(reviews.stream().mapToDouble(Review::getRating).average().orElse(0))
+                .totalRating(reviews.size())
+                .productId(productId)
+                .build();
+    }
+
+    private Map<String,Integer> processRatingData(List<Review> reviews) {
+        Map<String, Integer> ratingData = new HashMap<>(){{
+            put("1", 0);
+            put("2", 0);
+            put("3", 0);
+            put("4", 0);
+            put("5", 0);
+        }};
+
+        for(Review review: reviews) {
+            int rating = review.getRating();
+            ratingData.put(String.valueOf(rating), ratingData.get(String.valueOf(rating)) + 1);
+        }
+        return ratingData;
     }
 
 
@@ -611,4 +754,27 @@ public class ProductsServices implements productServices {
     }
 
 
+    public List<ProductViewDto> getProductsByCategory(String category) {
+        List<Product> products = productsRepo.findAllByCategory(category);
+        List<ProductViewDto> response = new ArrayList<>();
+        products.forEach(product->{
+            var res = ProductViewDto.builder()
+                    .name(product.getName())
+                    .productId(product.getIdentifier())
+                    .imageURL(ImplFunction.parseImageURL(product.getImages()))
+                    .regularPrice(product.getRegularPrice())
+                    .rating(product.getAverageRating())
+                    .published(product.isEnabled())
+                    .stock(product.getStock())
+                    .thumbnail(parseImageURL(product.getImages()).get(0))
+                    .category(product.getCategory())
+                    .build();
+            if(product.getSalePrice() != 0){
+                res.setSalePrice(product.getSalePrice());
+            }
+
+            response.add(res);
+        });
+        return response;
+    }
 }

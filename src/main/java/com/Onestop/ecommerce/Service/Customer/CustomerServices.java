@@ -1,7 +1,9 @@
 package com.Onestop.ecommerce.Service.Customer;
 
 import com.Onestop.ecommerce.Dto.CustomerDto.AddressResponse;
+import com.Onestop.ecommerce.Dto.CustomerDto.UserInfo;
 import com.Onestop.ecommerce.Entity.Customer.Customer;
+import com.Onestop.ecommerce.Entity.Customer.MembershipType;
 import com.Onestop.ecommerce.Entity.Customer.cart.Cart;
 import com.Onestop.ecommerce.Entity.Customer.cart.WishList;
 import com.Onestop.ecommerce.Entity.user.userEntity;
@@ -12,6 +14,7 @@ import com.Onestop.ecommerce.Repository.CustomerRepo.WishListRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.User;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -34,6 +37,8 @@ public class CustomerServices {
                 .user(user)
                 .address(new ArrayList<>())
                 .paymentCards(new ArrayList<>())
+                .wallet(5000)
+                .memberShip(MembershipType.SILVER)
                 .build();
         var cart = Cart.builder()
                 .customer(customer)
@@ -91,5 +96,32 @@ public class CustomerServices {
             return 0;
         }
         return cartServices.getCartTotal(customer.getCart().getIdentifier());
+    }
+
+    public String updateCustomerInfo(UserInfo request,String userName){
+        log.info("{}",request.getPhoneNumber());
+        var customer = customerRepo.findByUserEmail(userName);
+        var user = customer.getUser();
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setDateOfBirth(request.getDob());
+        user.setPhoneNumber(request.getPhoneNumber());
+        customer.setUser(user);
+        customerRepo.save(customer);
+        return "success";
+    }
+
+    public UserInfo getUserInfo(String userName){
+        var customer = customerRepo.findByUserEmail(userName);
+        var user = customer.getUser();
+        return UserInfo.builder()
+                .dob(user.getDateOfBirth())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .membership(customer.getMemberShip())
+                .phoneNumber(user.getPhoneNumber())
+                .walletBalance(customer.getWallet())
+                .email(user.getEmail())
+                .build();
     }
 }

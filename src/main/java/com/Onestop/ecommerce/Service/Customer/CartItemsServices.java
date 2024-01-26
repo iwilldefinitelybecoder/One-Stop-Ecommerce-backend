@@ -42,12 +42,14 @@ public class CartItemsServices implements CartItemsService{
         var product = productRepo.findByIdentifier(cartItemsRequest.getProductId()).orElseThrow(() -> new RuntimeException("Product not found"));
         var cart = customer.getCart();
         var cartItems = cart.getItems();
-        var cartItem = cartItemsRepo.findByProductIdentifier(cartItemsRequest.getProductId()).orElse(null);
+        log.info("{}", cart.getItems().size());
+        var cartItem = cartItemsRepo.findByCartIdAndProductIdentifier(cart.getId(),cartItemsRequest.getProductId()).orElse(null);
 
         if(cartItem == null){
             var cartItem1 = Items.builder()
                    .cart(cart)
                    .quantity(cartItemsRequest.getQuantity())
+                    .totalPrice(cartItemsRequest.getQuantity() * product.getSalePrice() > 0 ? product.getSalePrice() : product.getRegularPrice())
                    .product(product)
                     .identifier(UUID.randomUUID().toString())
                    .build();
@@ -71,6 +73,9 @@ public class CartItemsServices implements CartItemsService{
         }
       throw new RuntimeException("Product already in cart");
     }
+
+
+
 
     private Cart updateCartTotal(Cart cart){
         var cartItems = cart.getItems();
@@ -101,7 +106,7 @@ public class CartItemsServices implements CartItemsService{
     public ProductInfo updateProductQuantity(String email, CartItemsRequest cartItemsRequest) {
         var cartItem = cartItemsRepo.findByIdentifier(cartItemsRequest.getCartItemId()).orElseThrow(() -> new RuntimeException("Cart item not found"));
         cartItem.setQuantity(cartItemsRequest.getQuantity());
-        cartItem.setTotalPrice(cartItem.getQuantity() * cartItem.getProduct().getSalePrice());
+        cartItem.setTotalPrice(cartItem.getProduct().getSalePrice() != 0 ? cartItem.getQuantity() * cartItem.getProduct().getSalePrice() : cartItem.getQuantity() * cartItem.getProduct().getRegularPrice());
         cartItemsRepo.save(cartItem);
         updateItemTotal(email);
         return ProductInfo.builder()

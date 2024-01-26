@@ -68,4 +68,40 @@ public class OrdersController {
 
     }
 
+    @GetMapping("/getOrderDetailsById")
+    public ResponseEntity<?> getOrderDetails(@RequestParam String orderId){
+        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        try
+        {
+            return ResponseEntity.ok(orderServices.getOrderDetails(orderId));
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
+    }
+
+    @GetMapping("/getOrderBasicDetails")
+    public ResponseEntity<?> getOrderBasicDetails(){
+        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        try
+        {
+           return ResponseEntity.ok(orderServices.getOrderBasicDetails(userName));
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
+    }
+
+    @GetMapping("/getTrackingData")
+    public ResponseEntity<?> getTrackingData(@RequestParam("orderItemId") String orderItemId){
+        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        try
+        {
+            return ResponseEntity.ok(orderServices.getOrderItemTrackingData(orderItemId));
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
+    }
+
 }

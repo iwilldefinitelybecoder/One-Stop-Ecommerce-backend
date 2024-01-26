@@ -5,15 +5,16 @@ import com.Onestop.ecommerce.Dto.productsDto.*;
 import com.Onestop.ecommerce.Entity.products.MetaAttribute;
 import com.Onestop.ecommerce.Entity.products.Product;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
 
-public interface productServices {
+public interface   productServices {
 
 
-    String saveProduct(productsDto request, resourceDetailsTdo images, String email, Map<String,Object> extraAttributes);
+    String saveProduct(productsDto request, resourceDetailsTdo images, String userName);
 
 
 
@@ -26,14 +27,14 @@ public interface productServices {
 
     List<String> searchProducts(String keyword,String category);
 
-    List<ProductResponse> searchResults(String keyword, String category);
+    List<ProductResponse> searchResults(String keyword, String category, Pageable pageable);
 
-    String addReview(ReviewRequest request);
+    String addReview(ReviewRequest request,List<MultipartFile> images);
 
 
     List<ReviewRequest> getAllProductReviews(String productId);
 
-    List<Product> getProductAttributes(String attribute);
+    List<ProductResponse> getProductAttributes(MetaAttribute attribute);
 
 
     String updateProduct(productsDto request, String productId, List<MultipartFile> images);
@@ -49,4 +50,6 @@ public interface productServices {
 
 
     String updateProductMajorDetails(ProductRequest request, String productId);
+
+    DetailedProductRating getProductDetailReview(String productId);
 }

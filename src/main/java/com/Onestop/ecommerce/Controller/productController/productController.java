@@ -1,13 +1,21 @@
 package com.Onestop.ecommerce.Controller.productController;
 
 import com.Onestop.ecommerce.Dto.productsDto.*;
+import com.Onestop.ecommerce.Entity.products.MetaAttribute;
 import com.Onestop.ecommerce.Entity.products.Product;
 
 import com.Onestop.ecommerce.Events.Emmitter.DisableProductEmmitter;
+import com.Onestop.ecommerce.Service.Customer.OrderServices;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.autoconfigure.tracing.OpenTelemetryAutoConfiguration;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -21,22 +29,26 @@ import java.util.Map;
 @RestController
 @RequestMapping("api/v1/product")
 @Slf4j
+@RequiredArgsConstructor
 public class productController {
 
-    @Autowired
-    private com.Onestop.ecommerce.Service.products.ProductsServices ProductsServices;
 
-    @Autowired
-    private ApplicationEventPublisher eventPublisher;
+    private final com.Onestop.ecommerce.Service.products.ProductsServices ProductsServices;
+
+
+    private final ApplicationEventPublisher eventPublisher;
+    private final OrderServices orderServices;
+
+
 
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(
             @ModelAttribute productsDto request,
-            @RequestParam(value = "images",required = false) List<MultipartFile> images,
-            @RequestParam(value = "extraAttributes",required = false) Map<String,Object> extraAttributes
+            @RequestParam(value = "images",required = false) List<MultipartFile> images
+//            @RequestParam(value = "extraAttributes",required = false) Map<String,Object> extraAttributes
             ){
 
-        Map<String,Object> extraAttributes1 = (Map<String, Object>) extraAttributes.get("extraAttributes");
+//        Map<String,Object> extraAttributes1 = (Map<String, Object>) extraAttributes.get("extraAttributes");
 
 
 
@@ -44,7 +56,7 @@ public class productController {
         var images1 = resourceDetailsTdo.builder()
                 .image(images)
                 .build();
-        String response1 = ProductsServices.saveProduct(request,images1,userName,extraAttributes1);
+        String response1 = ProductsServices.saveProduct(request,images1,userName);
 
       try
         {
@@ -94,10 +106,12 @@ public class productController {
 
     @GetMapping("/search-results")
     public ResponseEntity<?> searchResults(@RequestParam(value = "keyword",required = false) String keyword
-                                            ,@RequestParam(value = "category",required = false) String category) {
+                                            ,@RequestParam(value = "category",required = false) String category,
+                                           @RequestParam(defaultValue = "0") int page,
+                                           @RequestParam(defaultValue = "10") int size) {
         try{
-
-            return ResponseEntity.status(200).body(ProductsServices.searchResults(keyword,category));
+            Pageable pageable  = PageRequest.of(page,size, Sort.by("averageRating").descending());
+            return ResponseEntity.status(200).body(ProductsServices.searchResults(keyword,category,pageable));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }
@@ -116,9 +130,11 @@ public class productController {
     }
 
     @PostMapping("/addReview")
-    public ResponseEntity<?> addReview(@RequestBody ReviewRequest request) {
+    public ResponseEntity<?> addReview(@ModelAttribute ReviewRequest request,@RequestParam("reviewImages") List<MultipartFile> images) {
+        var userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        request.setEmail(userName);
         try{
-            String response = ProductsServices.addReview(request);
+            String response = ProductsServices.addReview(request,images);
             return ResponseEntity.status(200).body(response);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(e.getMessage());
@@ -126,16 +142,78 @@ public class productController {
 
     }
 
-    @GetMapping("/attributes")
-    public ResponseEntity<?> getProductAttributes(@RequestParam(value = "attribute") String attribute) {
+    @GetMapping("/validatePurchase")
+    public ResponseEntity<?> validatePurchase(@RequestParam(value = "purchaseId") String purchaseId) {
         try{
-            List<Product> response = ProductsServices.getProductAttributes(attribute);
-            return ResponseEntity.status(200).body(response);
+
+            return ResponseEntity.status(200).body(orderServices.verifyPurchase(purchaseId));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }
 
 
+
+    }
+    @GetMapping("/verifyReviewExists")
+    public ResponseEntity<?> doesReviewExists(@RequestParam(value = "purchaseId") String purchaseId) {
+        var userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        try{
+
+            return ResponseEntity.status(200).body(orderServices.validateReviewExists(purchaseId,userName));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+
+
+
+    }
+    @GetMapping("/getWriteReviewMetaInfo")
+    public ResponseEntity<?> getReviewMetaInfo(@RequestParam(value = "purchaseId") String purchaseId) {
+        var userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        try{
+
+            return ResponseEntity.status(200).body(orderServices.getReviewMetaInfo(userName,purchaseId));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+
+
+
+    }
+    @GetMapping("/getReviewData")
+    public ResponseEntity<?> getReviewData(@RequestParam(value = "purchaseId") String purchaseId) {
+        var userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        try{
+
+            return ResponseEntity.status(200).body(orderServices.ReviewData(userName,purchaseId));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+
+
+
+    }
+
+    @GetMapping("/attributes")
+    public ResponseEntity<?> getProductAttributes(@RequestParam(value = "attribute") MetaAttribute attribute) {
+        try{
+
+            return ResponseEntity.status(200).body(ProductsServices.getProductAttributes(attribute));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+
+    }
+
+    @GetMapping("/getProductsByCategory")
+    public ResponseEntity<?> getProductsByCategory(@RequestParam(value = "category") String category) {
+        log.info(category);
+        try{
+
+            return ResponseEntity.status(200).body(ProductsServices.getProductsByCategory(category));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
 
     }
 
@@ -191,6 +269,18 @@ public class productController {
         try {
             ProductResponse response = ProductsServices.getProduct(productId);
             return ResponseEntity.status(200).body(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+
+        }
+
+    }
+
+    @GetMapping("/getProductDetailReview")
+    public ResponseEntity<?> getProductDetailReview(@RequestParam(value = "productId") String productId) {
+        try {
+
+            return ResponseEntity.status(200).body(ProductsServices.getProductDetailReview(productId));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(e.getMessage());
 

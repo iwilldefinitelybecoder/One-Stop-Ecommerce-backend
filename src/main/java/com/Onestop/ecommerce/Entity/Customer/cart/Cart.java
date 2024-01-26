@@ -21,6 +21,9 @@ import java.util.UUID;
 @Builder
 @Table(name = "cart")
 public class Cart {
+
+//    private final double tax = 3;
+//    private final double shipping = 2;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cart_id")
@@ -40,7 +43,7 @@ public class Cart {
 
     private double shippingTotal;
     private double taxTotal;
-    private double discountTotal;
+    private double discountTotal = 0;
     private double subTotal;
     private double grandTotal;
 
@@ -51,8 +54,12 @@ public class Cart {
     }
     @PreUpdate
     public void performPreUpdateActions(){
+
+    }
+
+    public void updateCartTotals(){
         updateTotalItems();
-        updateCartTotal();
+
     }
 
     private void uniqueIdentifier(){

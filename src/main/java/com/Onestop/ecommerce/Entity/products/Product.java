@@ -45,8 +45,9 @@ public class Product {
     private Vendor vendor;
     @OneToOne
     private resourceDetails thumbnail;
-    @ElementCollection
-    private List<String>productTypeTags;
+    @ManyToMany(fetch = FetchType.LAZY)
+    private Collection<Tags> tags = new ArrayList<>();
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<resourceDetails> images = new ArrayList<>();
 
