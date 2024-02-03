@@ -73,7 +73,7 @@ public class CouponsServices implements CouponsService {
                 .couponStartDate(coupons.getCouponStartDate())
                 .name(coupons.getName())
 
-                .message(coupons.getMinimumPurchaseAmount() > cartTotal ? "Add "+ discountAvailableAt +" Worth of Items More To Cart To Apply Coupon" : "Use Coupon Code  To Get " + coupons.getDiscountAmount() + " Off On Your Purchase")
+                .message(coupons.getMinimumPurchaseAmount() > cartTotal ? "Add " + discountAvailableAt + " Worth of Items More To Cart To Apply Coupon" : "Use Coupon Code  To Get " + coupons.getDiscountAmount() + " Off On Your Purchase")
                 .build();
 
     }
@@ -101,12 +101,11 @@ public class CouponsServices implements CouponsService {
                 .couponActive(false)
                 .build();
 
-            if(addCouponsRequest.getCouponUsage().equals(CouponUsage.SINGLE)){
-                coupons.setCouponUsageLimit(1);
-            }
-            else{
-                coupons.setCouponUsageLimit(addCouponsRequest.getCouponUsageLimit());
-            }
+        if (addCouponsRequest.getCouponUsage().equals(CouponUsage.SINGLE)) {
+            coupons.setCouponUsageLimit(1);
+        } else {
+            coupons.setCouponUsageLimit(addCouponsRequest.getCouponUsageLimit());
+        }
 
         couponsRepo.save(coupons);
         return "SUCCESS";
@@ -118,7 +117,7 @@ public class CouponsServices implements CouponsService {
         var coupon = couponsRepo.findByCouponCode(couponId);
         couponsUsedRepo.findByCoupons_CouponCode(couponId).forEach(couponsUsedRepo::delete);
         couponsRepo.delete(coupon);
-         return "SUCCESS";
+        return "SUCCESS";
     }
 
     @Override
@@ -129,10 +128,9 @@ public class CouponsServices implements CouponsService {
         coupon.setCouponStartDate(addCouponsRequest.getCouponStartDate());
         coupon.setCouponUsage(addCouponsRequest.getCouponUsage());
 
-        if(addCouponsRequest.getCouponUsage().equals(CouponUsage.SINGLE)){
+        if (addCouponsRequest.getCouponUsage().equals(CouponUsage.SINGLE)) {
             coupon.setCouponUsageLimit(1);
-        }
-        else{
+        } else {
             coupon.setCouponUsageLimit(addCouponsRequest.getCouponUsageLimit());
         }
 
@@ -141,7 +139,7 @@ public class CouponsServices implements CouponsService {
     }
 
     @Override
-    public String applyCoupon(String couponId, String email) {
+    public Double applyCoupon(String couponId, String email) {
         var coupon = couponsRepo.findByCouponCode(couponId);
         var customer = customerServices.getCustomer(email);
 
@@ -156,40 +154,46 @@ public class CouponsServices implements CouponsService {
         } else if (couponUsed.getUsageCount() <= coupon.getCouponUsageLimit()) {
             couponUsed.setUsageCount(couponUsed.getUsageCount() + 1);
         } else {
-            return "COUPON_ALREADY_USED";
+            log.info("Coupon usage limit reached");
+            return 0.0;
         }
 
         var cart = customer.getCart();
         var cartTotal = cart.getCartTotal();
 
         if (coupon == null || !coupon.isCouponValid()) {
-            return "COUPON_NOT_VALID";
+            log.info("Coupon not valid");
+            return 0.0;
         }
 
         if (coupon.getCouponUsage().equals(CouponUsage.SINGLE)) {
             if (couponsRepo.countByCouponIdAndCustomerEmail(coupon.getId(), email) == 0) {
                 if (coupon.isCouponValidForCart(cartTotal)) {
-                    cart.setCartTotal(coupon.getDiscountAmount() > 0 ? cartTotal - coupon.getDiscountAmount() : cartTotal - (cartTotal * coupon.getDiscountPercentage() / 100));
-                    cartRepo.save(cart);
+                    couponsRepo.save(coupon);
                     couponsUsedRepo.save(couponUsed);
-                    return "COUPON_APPLIED";
+                   return coupon.getMaximumDiscountAmount() ;
                 }
-                return "COUPON_NOT_VALID_FOR_CART";
+                log.info("Coupon not valid for cart");
+                return 0.0;
             }
-            return "COUPON_ALREADY_USED";
+            log.info("Coupon already used");
+            return 0.0;
         } else {
             if (couponUsed.getUsageCount() < coupon.getCouponUsageLimit()) {
                 if (coupon.isCouponValidForCart(cartTotal)) {
-                    cart.setCartTotal(coupon.getDiscountAmount() > 0 ? cartTotal - coupon.getDiscountAmount() : cartTotal - (cartTotal * coupon.getDiscountPercentage() / 100));
-                    cartRepo.save(cart);
+                    couponsRepo.save(coupon);
                     couponsUsedRepo.save(couponUsed);
-                    return "COUPON_APPLIED";
+                     return Math.min(coupon.getMaximumDiscountAmount(), cartTotal * coupon.getDiscountPercentage());
                 }
-                return "COUPON_NOT_VALID_FOR_CART";
+                log.info("Coupon not valid for cart");
+                return 0.0;
             }
-            return "COUPON_ALREADY_USED";
+            log.info("Coupon usage limit reached");
+            return 0.0;
         }
     }
+
+
 
     @Override
     public HashMap<String, String> validateCoupon(String couponId, String email) {

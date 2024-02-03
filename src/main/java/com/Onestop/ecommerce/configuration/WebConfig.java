@@ -14,6 +14,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registery){
         registery.addResourceHandler("/image-resources/**")
-                .addResourceLocations("file:///C:/Users/Lenovo/Downloads/product-Images");
+                .addResourceLocations("file:///C:/Users/tonys/Downloads/product-Images");
     }
 }

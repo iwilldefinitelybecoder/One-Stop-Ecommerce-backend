@@ -28,7 +28,9 @@ public class productsDto {
     private double salePrice;
     private String brand;
     private String wareHouseId;
-    private List<MultipartFile> images;
+    private List<String> image;
+    private String thumbnail;
+    private List<String> existingImages;
 //    private Map<String, Object> extraAttributes = new HashMap<>();
 //
 //    @JsonAnySetter

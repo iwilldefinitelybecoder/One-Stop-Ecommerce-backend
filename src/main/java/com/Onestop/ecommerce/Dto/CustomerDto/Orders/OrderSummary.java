@@ -15,6 +15,6 @@ public class OrderSummary{
     private double taxTotal;
     private Long orderTotal;
     private String couponId;
-    private Long couponDiscount;
+    private Double discount;
     private double grandTotal;
 }

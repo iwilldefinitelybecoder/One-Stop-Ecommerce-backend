@@ -32,9 +32,6 @@ public class  ShipmentUpdates {
     @ManyToOne(fetch = FetchType.LAZY)
     private OrderShippment orderShippment;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id")
-    private Orders orders;
 
     @PrePersist
     public void prePersist(){

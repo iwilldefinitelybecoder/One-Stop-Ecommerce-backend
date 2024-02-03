@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -23,6 +24,6 @@ public class ReviewRequest {
     private Date date;
     private Long ProfileIconId;
     private String email;
-
+    private List<String> images;
 
 }

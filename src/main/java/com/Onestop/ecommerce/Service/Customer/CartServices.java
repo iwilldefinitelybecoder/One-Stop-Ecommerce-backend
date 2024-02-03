@@ -71,7 +71,6 @@ public class CartServices implements CartService {
                     info.add(productInfo);
                 });
         return CartItemsResponse.builder()
-
                 .totalItems(cartItems.size())
                 .productInfo(info)
                 .tax(cart.getCartTotal() * 0.03)

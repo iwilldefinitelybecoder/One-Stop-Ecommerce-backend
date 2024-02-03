@@ -1,5 +1,6 @@
 package com.Onestop.ecommerce.Dto.CustomerDto.Orders;
 
+import com.Onestop.ecommerce.Entity.Logistics.ShipmentMethod;
 import com.Onestop.ecommerce.Entity.Payments.PaymentMethods;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -26,6 +27,7 @@ public class OrderRequest {
     private Double ordertotal;
     private String couponCode;
     private String paymentProcessId;
+    private ShipmentMethod shippingType;
     @Enumerated(EnumType.STRING)
     private PaymentMethods paymentMethod;
     private boolean useWallet;

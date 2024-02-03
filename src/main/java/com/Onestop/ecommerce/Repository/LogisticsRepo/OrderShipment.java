@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface OrderShipment extends JpaRepository<OrderShippment, Long> {
-    List<OrderShippment> findByTrackingNumber(String trackingNumber);
-    List<OrderShippment> findAllByOrdersIdentifier(String identifier );
-    List<OrderShippment> findByOrdersId(Long id);
+    OrderShippment findByTrackingNumber(String trackingNumber);
+    OrderShippment findByOrderItemsIdentifier(String identifier );
+    OrderShippment findByOrderItemsId(Long id);
 }

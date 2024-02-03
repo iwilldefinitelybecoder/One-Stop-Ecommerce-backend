@@ -66,6 +66,7 @@ public class VendorServices implements VendorService {
                 .supportEmail(request.getVendorEmail())
                 .vendorCompanyName(request.getVendorCompanyName())
                 .build();
+        log.info("Vendor: {}",vendor.getVendorCompanyName());
         vendorRepository.save(vendor);
         var addrole = user.getRoles();
         addrole.add(role);

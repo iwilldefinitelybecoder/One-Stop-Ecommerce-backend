@@ -38,7 +38,7 @@ public class GlobalApiExceptionHandler {
     public ExceptionResponse handleUserNotFoundException(UserNotfoundException ex) {
        ExceptionResponse response = new ExceptionResponse();
        response.setMessage(ex.getMessage());
-         response.setErrorCode("404");
+         response.setErrorCode("400");
             response.setRequestedURI("http://localhost:8080/api/v1/user");
             return response;
     }
@@ -50,7 +50,7 @@ public class GlobalApiExceptionHandler {
     public ExceptionResponse handleCouponException(CouponException ex) {
        ExceptionResponse response = new ExceptionResponse();
        response.setMessage(ex.getMessage());
-         response.setErrorCode("404");
+         response.setErrorCode("400");
             response.setRequestedURI("http://localhost:8080/api/v1/products/coupons");
             return response;
     }

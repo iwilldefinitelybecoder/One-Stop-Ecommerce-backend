@@ -17,6 +17,10 @@ public class ImplFunction {
         });
         return imageURL;
     }
+    public static String parseImageURL(resourceDetails images){
+
+            return  "http://localhost:8000/image-resources/product-Images/" + images.getUrl();
+    }
 
     public static List<String> parseImageURLs(List<ReviewImageResource> images){
         List<String> imageURL = new ArrayList<>();

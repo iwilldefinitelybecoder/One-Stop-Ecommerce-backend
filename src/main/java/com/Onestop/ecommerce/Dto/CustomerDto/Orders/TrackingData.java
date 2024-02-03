@@ -1,5 +1,6 @@
 package com.Onestop.ecommerce.Dto.CustomerDto.Orders;
 
+import com.Onestop.ecommerce.Entity.Logistics.ShipmentAction;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +15,7 @@ import java.util.Date;
 public class TrackingData {
 
     private Date timestamp;
-    private String action;
+    private ShipmentAction action;
     private String place;
 
 }

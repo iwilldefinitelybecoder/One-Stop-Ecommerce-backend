@@ -100,13 +100,15 @@ public class ProductsServices implements productServices {
     @Autowired
     private PurchaseHistory purchaseHistory;
 
+
+
     private Vendor getVendor(String email){
         return vendorRepo.findByUserEmail(email).orElseThrow(()-> new RuntimeException("vendor not found"));
     }
 
     @Override
     @Transactional
-    public String saveProduct(productsDto request,resourceDetailsTdo images,String email) {
+    public String saveProduct(productsDto request,resourceDetailsTdo images,String email,MultipartFile thumbnailFile) {
         var vendor = getVendor(email);
 //        var extraAttributes = ProductExtraAttributes.builder()
 //                .extraAttributes(extraAttributess)
@@ -126,9 +128,10 @@ public class ProductsServices implements productServices {
                 .category(request.getCategory())
                 .stock(request.getStock())
                 .vendor(vendor)
-                .averageRating(0.0)
+                .averageRating(0)
                 .brand(request.getBrand())
                 .wareHouse(wareHouse)
+                .images(new ArrayList<>())
                 .reviews(new ArrayList<>())
 //                .extraAttributesId(newAttributeId)
                 .regularPrice(request.getRegularPrice())
@@ -143,7 +146,7 @@ public class ProductsServices implements productServices {
                 .Stock(request.getStock())
                 .build();
         product.setProductInventory(inventoryProduct);
-        Product product1 = saveImages(images,product);
+        Product product1 = saveImages(images,product,thumbnailFile);
         wareHouse.getInventory().add(inventoryProduct);
         wareHouse.setCapacity(wareHouse.getCapacity() - inventoryProduct.getStock());
         createProductSales(product);
@@ -170,45 +173,64 @@ public class ProductsServices implements productServices {
 
 
     @Override
-    public Product saveImages(resourceDetailsTdo images, Product product) {
-        boolean success = true; // Initialize a boolean variable to track success
+    public Product saveImages(resourceDetailsTdo images, Product product, MultipartFile thumbnailFile) {
+
         List<resourceDetails> ResourceDetails = new ArrayList<>();
         for (MultipartFile image : images.getImage()) {
             try {
                 HashMap response = SaveImageTOFs(image);
                 if (response.get("originalFileName") != null && response.get("destination") != null) {
-                    log.info("saving image");
-                   var resource = resourceDetails.builder()
-                                   .name(response.get("originalFileName").toString())
-                                           .url(response.get("newFileName").toString())
-                                             .product(product)
-                                                .build();
+
+                    var resource = resourceDetails.builder()
+                            .name(response.get("originalFileName").toString())
+                            .url(response.get("newFileName").toString())
+                            .product(product)
+                            .build();
 
                     resourceRepo.save(resource);
                     ResourceDetails.add(resource);
 
                 } else {
                     // Handle the case where image details are missing or invalid
-                    success = false;
+                    return null;
 
                 }
             } catch (IOException e) {
+                log.error("error from image");
                 e.printStackTrace();
-                success = false; // Set success to false in case of an exception
+                return null; // Set success to false in case of an exception
 
             }
         }
-        product.setImages(ResourceDetails);
-        product.setThumbnail(ResourceDetails.get(0));
-        // After the loop, return the result based on the success variable
-        if (success) {
-            log.info("success");
-            return product;
+       product.getImages().addAll(ResourceDetails);
+
+        if(thumbnailFile != null){
+            try {
+                HashMap response = SaveImageTOFs(thumbnailFile);
+                if (response.get("originalFileName") != null && response.get("destination") != null) {
+
+                    var resource = resourceDetails.builder()
+                            .name(response.get("originalFileName").toString())
+                            .url(response.get("newFileName").toString())
+                            .product(product)
+                            .build();
+
+                    resourceRepo.save(resource);
+                    product.setThumbnail(resource);
+
+                } else {
+
+                    return null;
+
+                }
+            } catch (IOException e) {
+                log.error("error from thumbnail");
+                e.printStackTrace();
+                return null; // Set success to false in case of an exception
+
+            }
         }
-        else {
-            log.info("error");
-            return null;
-        }
+        return product;
     }
 
     public Review saveReviewImages(List<MultipartFile> images, Review review) {
@@ -294,6 +316,11 @@ public class ProductsServices implements productServices {
                     .regularPrice(product.getRegularPrice())
                     .imageURL(parseImageURL(product.getImages()))
                     .productId(product.getIdentifier())
+                    .numberOfRatings(product.getReviews().size())
+                    .rating(product.getAverageRating())
+                    .vendorName(product.getVendor().getVendorCompanyName())
+                    .stock(product.getStock())
+                    .brand(product.getBrand())
                     .isPublished(product.isEnabled())
                     .innDate(inventory.getInDate())
                     .numberOfRatings(product.getReviews().size())
@@ -353,31 +380,45 @@ public class ProductsServices implements productServices {
 
 
     @Override
-    public List<ProductResponse> searchResults(String keyword, String category, Pageable pageable) {
+    public List<ProductResponse> searchResults(String keyword, String category, Pageable pageable, Double averageRating, Double[] range) {
         if(keyword == null || keyword.isBlank()) {
-            return null;
+            keyword = null;
         }
         if(category == null || category.isBlank()) {
             category = null;
         }
         List<ProductResponse> productsList = new ArrayList<>();
+        List<String> categories = category != null
+                ? Arrays.stream(category.split(","))
+                .map(String::trim) // Trim leading and trailing spaces
+                .collect(Collectors.toList())
+                : new ArrayList<>();
 
-        Page<Product> products = productsRepo.findProductsByRegexPageable(keyword,category,pageable);
-                products.forEach(product -> {
-                var response = ProductResponse.builder()
-                        .name(product.getName())
-                        .description(product.getDescription())
-                        .category(product.getCategory())
-                        .regularPrice(product.getRegularPrice())
-                        .imageURL(parseImageURL(product.getImages()))
-                        .productId(product.getIdentifier())
-                        .numberOfRatings(product.getReviews().size())
-                        .rating(product.getAverageRating())
-                        .build();
-                if(product.getSalePrice() != 0){
-                    response.setSalePrice(product.getSalePrice());
-                }
-                productsList.add(response);
+//        range = range != null ? range : new Double[]{0.0, Double.MAX_VALUE};
+
+
+        String finalKeyword = keyword;
+        Double[] finalRange = range;
+
+        Page<Product> products = productsRepo.findProductsByRegexPageable(finalKeyword, categories, averageRating, pageable);
+        products.forEach(product -> {
+            if (!product.isEnabled()) {
+                return;
+            }
+            var response = ProductResponse.builder()
+                    .name(product.getName())
+                    .description(product.getDescription())
+                    .category(product.getCategory())
+                    .regularPrice(product.getRegularPrice())
+                    .imageURL(parseImageURL(product.getImages()))
+                    .productId(product.getIdentifier())
+                    .numberOfRatings(product.getReviews().size())
+                    .rating(product.getAverageRating())
+                    .build();
+            if (product.getSalePrice() != 0) {
+                response.setSalePrice(product.getSalePrice());
+            }
+            productsList.add(response);
         });
 
 
@@ -425,12 +466,14 @@ public class ProductsServices implements productServices {
         var reviews = reviewsRepo.findAllByProductIdentifier(productId);
         var response = new ArrayList<ReviewRequest>();
         reviews.stream().sorted(Comparator.comparing(Review::getDate).reversed()).forEach(review -> {
+
             var reviewRequest = ReviewRequest.builder()
                     .firstName(review.getCustomer().getUser().getFirstName())
                     .lastName(review.getCustomer().getUser().getLastName())
                     .date(review.getDate())
                     .ProfileIconId(review.getCustomer().getUser().getImageId())
                     .rating(review.getRating())
+                    .images(ImplFunction.parseImageURLs(reviewResourceRepo.findAllByReviewId(review.getId())))
                     .review(review.getReview())
                     .headline(review.getHeadline())
                     .build();
@@ -452,6 +495,8 @@ public class ProductsServices implements productServices {
                     .name(product.getProduct().getName())
                     .description(product.getProduct().getDescription())
                     .category(product.getProduct().getCategory())
+                    .brand(product.getProduct().getBrand())
+                    .vendorName(product.getProduct().getVendor().getVendorCompanyName())
                     .regularPrice(product.getProduct().getRegularPrice())
                     .imageURL(parseImageURL(product.getProduct().getImages()))
                     .productId(product.getProduct().getIdentifier())
@@ -459,6 +504,7 @@ public class ProductsServices implements productServices {
                     .isPublished(product.getProduct().isEnabled())
                     .numberOfRatings(product.getProduct().getReviews().size())
                     .rating(product.getProduct().getAverageRating())
+                    .thumbnail(product.getProduct().getThumbnail() !=null ?ImplFunction.parseImageURL(product.getProduct().getThumbnail()):null)
                     .build();
             if(product.getProduct().getSalePrice() != 0){
                 response.setSalePrice(product.getProduct().getSalePrice());
@@ -473,33 +519,84 @@ public class ProductsServices implements productServices {
 
 
     @Override
-    public String updateProduct(productsDto request, String productId, List<MultipartFile> images) {
-        var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
-        List<Tags> newTags = new ArrayList<>();
-        for(String tag: request.getTags()){
-            newTags.add(tagsRepo.findByName(tag));
-        }
+    @Transactional
+    public String updateProduct(productsDto request, String productId, List<MultipartFile> images, MultipartFile thumbnailFile) {
+        Product product = productsRepo.findByIdentifier(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        var inventory = inventoryRepo.findByProductIdentifier(productId)
+                .orElseThrow(() -> new RuntimeException("inventory not found"));
+
+        var existingImages = resourceRepo.findByProductId(product.getId());
+
+
+        // Remove images that are not in the request
+        List<String> productNames = request.getExistingImages().stream()
+                .map(url -> url.substring(url.lastIndexOf('/') + 1))
+                .toList();
+
+        productNames.forEach(image -> {
+            log.info("{}",image);
+        });
+
+        List<resourceDetails> imagesToRemove = null;
+
+            imagesToRemove = existingImages.map(imagess ->
+
+                            imagess.stream()
+                                    .filter(image -> !productNames.contains(image.getUrl()))
+                                    .toList())
+                    .orElse(Collections.emptyList());
+
+        imagesToRemove.forEach(image -> {
+            log.info("{}",image.getName());
+        });
+
+        // Update product details
+        List<String> existingTags = product.getTags().stream()
+                .map(Tags::getName)
+                .toList();
+
+        List<Tags> newTags = request.getTags().stream()
+                .filter(tag -> !existingTags.contains(tag))
+                .map(tagsRepo::findByName)
+                .collect(Collectors.toList());
+
         product.setName(request.getName());
         product.setDescription(request.getDescription());
         product.setCategory(request.getCategory());
         product.setRegularPrice(request.getRegularPrice());
         product.setBrand(request.getBrand());
         product.setStock(request.getStock());
+        product.setThumbnail(request.getThumbnail() != null
+                ? resourceRepo.findByUrl(request.getThumbnail().substring(request.getThumbnail().lastIndexOf('/') + 1))
+                : null);
         product.setTags(newTags);
-        product.setSalePrice(request.getSalePrice() !=0?request.getSalePrice():0);
-        product.setImages(new ArrayList<>());
-        product.setThumbnail(null);
-        Product product1 = saveImages(resourceDetailsTdo.builder().image(images).build(),product);
+        product.setSalePrice(request.getSalePrice() != 0 ? request.getSalePrice() : 0);
+        inventory.getWareHouse().setCapacity(inventory.getWareHouse().getCapacity() + inventory.getStock() - request.getStock());
+        inventory.setStock(request.getStock());
+
+
+
+        if (images != null) {
+            product = saveImages(resourceDetailsTdo.builder().image(images).build(), product, thumbnailFile);
+        }
+
+//        log.info("{}",imagesToRemove.get(0));
+        Product finalProduct = product;
+        imagesToRemove.forEach(image -> {
+            finalProduct.getImages().remove(image);
+            productsRepo.save(finalProduct);
+            resourceRepo.delete(image);
+
+        });
         try {
-            productsRepo.save(product1);
+            inventoryRepo.save(inventory);
+            productsRepo.save(finalProduct);
             return "success";
         } catch (Exception e) {
             log.error(e.getMessage());
             return "error";
         }
-
-
-
     }
 
     @Override
@@ -551,9 +648,9 @@ public class ProductsServices implements productServices {
 
     public productsDto getEditProductDetails(String productId){
         var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
-        var attributes = specialAttributesRepo.findByProductId(product.getId());
-        var tags = product.getTags().stream().map(Tags::getName).toList();
-        var extraAttributes = productExtraAttributesRepo.findById(product.getExtraAttributesId()).orElseThrow(()-> new RuntimeException("product not found"));
+//        var attributes = specialAttributesRepo.findByProductId(product.getId());
+        var tags = product.getTags().stream().map(tags1 -> tags1.getName()).toList();
+//        var extraAttributes = productExtraAttributesRepo.findById(product.getExtraAttributesId()).orElseThrow(()-> new RuntimeException("product not found"));
         return productsDto.builder()
                 .name(product.getName())
                 .description(product.getDescription())
@@ -562,8 +659,10 @@ public class ProductsServices implements productServices {
                 .brand(product.getBrand())
                 .stock(product.getStock())
                 .tags(tags)
+                .wareHouseId(product.getWareHouse().getWareHouseName())
                 .salePrice(product.getSalePrice())
-//                .images(FileManagerproduct.getImages().stream().map(resourceDetails::getUrl).toList())
+                .image(product.getImages() !=null ?ImplFunction.parseImageURL(product.getImages()):null)
+                .thumbnail(product.getThumbnail() !=null ?ImplFunction.parseImageURL(product.getThumbnail()):null)
 //                .extraAttributes(extraAttributes.getExtraAttributes())
                 .build();
     }
@@ -584,8 +683,13 @@ public class ProductsServices implements productServices {
     @Override
     public ProductResponse getProduct(String productId) {
         var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
+//        Optional<ProductExtraAttributes> extraAttribute = null;
+//        if(product.getExtraAttributesId() != null){
+//            extraAttribute = productExtraAttributesRepo.findById(product.getExtraAttributesId());
+//        }
 
 
+//        assert extraAttribute != null;
         var response = ProductResponse.builder()
                 .name(product.getName())
                 .description(product.getDescription())
@@ -596,6 +700,7 @@ public class ProductsServices implements productServices {
                 .vendorName(product.getVendor().getVendorCompanyName())
                 .productId(product.getIdentifier())
                 .numberOfRatings(product.getReviews().size())
+//                .extraAttributes(extraAttribute.<Map<String, ?>>map(ProductExtraAttributes::getExtraAttributes).orElse(null))
                 .rating(product.getAverageRating())
                 .stock(product.getStock())
                 .isPublished(product.isEnabled())
@@ -678,7 +783,8 @@ public class ProductsServices implements productServices {
 
         product.setRegularPrice(request.getRegularPrice());
         product.setSalePrice(request.getSalePrice() != 0 ? request.getSalePrice() : 0);
-        product.setStock(request.getQuantity());
+        product.setStock( request.getQuantity());
+        inventory.getWareHouse().setCapacity(inventory.getWareHouse().getCapacity() + inventory.getStock() - request.getQuantity());
         inventory.setStock(request.getQuantity());
         inventoryRepo.save(inventory);
         specialAttributesRepo.save(attributes);
@@ -747,6 +853,7 @@ public class ProductsServices implements productServices {
             // Return a success response
             return response;
         } catch (IOException e) {
+            log.error("error from image");
             e.printStackTrace();
             // Handle the exception and return an error response
             return null;
@@ -761,12 +868,12 @@ public class ProductsServices implements productServices {
             var res = ProductViewDto.builder()
                     .name(product.getName())
                     .productId(product.getIdentifier())
-                    .imageURL(ImplFunction.parseImageURL(product.getImages()))
+                    .imageURL(product.getImages() !=null ?ImplFunction.parseImageURL(product.getImages()):null)
                     .regularPrice(product.getRegularPrice())
                     .rating(product.getAverageRating())
                     .published(product.isEnabled())
                     .stock(product.getStock())
-                    .thumbnail(parseImageURL(product.getImages()).get(0))
+                    .thumbnail(product.getThumbnail() !=null ?ImplFunction.parseImageURL(product.getThumbnail()):null)
                     .category(product.getCategory())
                     .build();
             if(product.getSalePrice() != 0){

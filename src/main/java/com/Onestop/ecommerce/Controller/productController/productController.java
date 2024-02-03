@@ -1,5 +1,6 @@
 package com.Onestop.ecommerce.Controller.productController;
 
+import com.Onestop.ecommerce.Dto.SearchRequest;
 import com.Onestop.ecommerce.Dto.productsDto.*;
 import com.Onestop.ecommerce.Entity.products.MetaAttribute;
 import com.Onestop.ecommerce.Entity.products.Product;
@@ -16,9 +17,13 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 
@@ -38,13 +43,15 @@ public class productController {
 
     private final ApplicationEventPublisher eventPublisher;
     private final OrderServices orderServices;
+    private final RestTemplate restTemplate = new RestTemplate();
 
 
 
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(
             @ModelAttribute productsDto request,
-            @RequestParam(value = "images",required = false) List<MultipartFile> images
+            @RequestParam(value = "images",required = false) List<MultipartFile> images,
+            @RequestParam(value = "thumbnailFile",required = false) MultipartFile thumbnailFile
 //            @RequestParam(value = "extraAttributes",required = false) Map<String,Object> extraAttributes
             ){
 
@@ -56,7 +63,7 @@ public class productController {
         var images1 = resourceDetailsTdo.builder()
                 .image(images)
                 .build();
-        String response1 = ProductsServices.saveProduct(request,images1,userName);
+        String response1 = ProductsServices.saveProduct(request,images1,userName,thumbnailFile);
 
       try
         {
@@ -68,14 +75,15 @@ public class productController {
 
     }
 
-    @PostMapping("/update")
+    @PostMapping("/updateProductDetails")
     public ResponseEntity<?> updateProduct(
             @ModelAttribute productsDto request,
             @RequestParam(value = "images",required = false) List<MultipartFile> images,
-            @RequestParam(value = "productId") String productId
+            @RequestParam(value = "productId") String productId,
+            @RequestParam(value = "thumbnailFile",required = false) MultipartFile thumbnailFile
     ){
         try {
-            String response = ProductsServices.updateProduct(request,productId,images);
+            String response = ProductsServices.updateProduct(request,productId,images,thumbnailFile);
             return ResponseEntity.status(200).body(response);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(e.getMessage());
@@ -95,23 +103,26 @@ public class productController {
     @GetMapping("/search")
     public ResponseEntity<?> searchProducts(@RequestParam(value = "keyword",required = false) String keyword
                                             ,@RequestParam(value = "category",required = false) String category) {
-        try{
-            List<String> products = ProductsServices.searchProducts(keyword,category);
-            return ResponseEntity.status(200).body(products);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(e.getMessage());
-        }
+
+
+
+
+            try{
+                List<String> products = ProductsServices.searchProducts(keyword,category);
+                return ResponseEntity.status(200).body(products);
+            } catch (Exception e) {
+                return ResponseEntity.status(500).body(e.getMessage());
+            }
 
     }
 
-    @GetMapping("/search-results")
-    public ResponseEntity<?> searchResults(@RequestParam(value = "keyword",required = false) String keyword
-                                            ,@RequestParam(value = "category",required = false) String category,
-                                           @RequestParam(defaultValue = "0") int page,
-                                           @RequestParam(defaultValue = "10") int size) {
+    @PostMapping ("/search-results")
+    public ResponseEntity<?> searchResults(@RequestBody SearchRequest request) {
+
         try{
-            Pageable pageable  = PageRequest.of(page,size, Sort.by("averageRating").descending());
-            return ResponseEntity.status(200).body(ProductsServices.searchResults(keyword,category,pageable));
+            Pageable pageable  = PageRequest.of(request.getPage(),request.getSize(), Sort.by("average_rating").descending());
+            log.info(request.getKeyword());
+            return ResponseEntity.status(200).body(ProductsServices.searchResults(request.getKeyword(),request.getCategory(),pageable,request.getAverageRating(),request.getPriceRange()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }
@@ -287,5 +298,19 @@ public class productController {
         }
 
     }
+
+    @GetMapping("/getEditProductDetails")
+    public ResponseEntity<?> getEditProductDetails(@RequestParam(value = "productId") String productId) {
+        log.info(productId);
+        try {
+
+            return ResponseEntity.status(200).body(ProductsServices.getEditProductDetails(productId));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+
+        }
+
+    }
+
 
 }

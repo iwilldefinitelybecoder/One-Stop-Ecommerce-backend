@@ -19,6 +19,7 @@ public class ProductListOfOrder {
     private Double totalPrice;
     private String purchaseId;
     private String orderItemId;
+    private String trackingId;
     private String name;
     @Enumerated(EnumType.STRING)
     private OrderStatus status;

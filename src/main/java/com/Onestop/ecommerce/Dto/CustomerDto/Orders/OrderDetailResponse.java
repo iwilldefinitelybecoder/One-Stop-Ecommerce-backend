@@ -33,6 +33,8 @@ public class OrderDetailResponse {
     private boolean paymentStatus;
     private OrderSummary orderSummary;
     private String generatedOrderId;
+    private String shippingMethod;
+    private Date replacementLastDate;
 
 }
 

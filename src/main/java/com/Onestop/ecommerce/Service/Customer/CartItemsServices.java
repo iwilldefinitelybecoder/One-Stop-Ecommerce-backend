@@ -53,6 +53,7 @@ public class CartItemsServices implements CartItemsService{
                    .product(product)
                     .identifier(UUID.randomUUID().toString())
                    .build();
+
             cartItems.add(cartItem1);
             cart.setItems(cartItems);
             cartRepo.save(updateCartTotal(cart));

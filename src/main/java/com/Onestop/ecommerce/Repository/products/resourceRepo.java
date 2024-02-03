@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface resourceRepo extends JpaRepository<resourceDetails, Long> {
 
     Optional<List<resourceDetails>> findByProductId(Long productId);
+
+    resourceDetails findByUrl(String url);
 }

@@ -4,6 +4,7 @@ package com.Onestop.ecommerce.Entity.orders;
 import com.Onestop.ecommerce.Entity.Customer.Customer;
 import com.Onestop.ecommerce.Entity.Customer.address.Address;
 import com.Onestop.ecommerce.Entity.Customer.card.Cards;
+import com.Onestop.ecommerce.Entity.Logistics.ShipmentMethod;
 import com.Onestop.ecommerce.Entity.Logistics.WareHouse;
 import com.Onestop.ecommerce.Entity.Payments.PaymentMethods;
 import jakarta.persistence.*;
@@ -37,7 +38,9 @@ public class Orders {
     private String trackingId;
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
+
     private String generatedOrderId;
+
 
     @Column(name = "payment_status")
     private boolean paymentStatus;
@@ -46,6 +49,9 @@ public class Orders {
     private double shippingTotal;
     private double taxTotal;
     private double grandTotal;
+    private Double discount;
+    private String couponCode;
+
 
     @ManyToOne
     @JoinColumn(name = "shipping_address_id")
@@ -87,9 +93,11 @@ public class Orders {
     @Temporal(TemporalType.TIMESTAMP)
     private Date ReplacementLastDate;
 
+    @Enumerated(EnumType.STRING)
+    private ShipmentMethod shipmentMethod;
+
     @PrePersist
     public void prePersist(){
-        this.orderDate = new Date();
         if(identifier == null){
             this.identifier = UUID.randomUUID().toString();
         }
@@ -108,19 +116,23 @@ public class Orders {
 
     }
 
-    private void orderSummary(){
-        double taxRate = 0.1;
-        double shippingRate = 0.05;
-        this.shippingTotal = (long) (total * shippingRate);
-        this.taxTotal = (long) (total * taxRate);
+    private void orderSummary() {
+        if (this.grandTotal == 0) {
+            double taxRate = 0.02;
+            double shippingRate = 0.03;
+            if(this.shipmentMethod.equals(ShipmentMethod.EXPRESS)){
+                shippingRate = shippingTotal + 300;
+            }else if(this.shipmentMethod.equals(ShipmentMethod.STANDARD)){
+                shippingRate = shippingTotal + 100;
+            }
+            this.shippingTotal = (long) (total * shippingRate);
+            this.taxTotal = (long) (total * taxRate);
 
 
-        this.grandTotal = (long) (total + shippingTotal + taxTotal);
+            this.grandTotal = (long) (total + shippingTotal + taxTotal);
+        }
     }
 
-    private String generateOrderId(Long orderId) {
-        String prefix = "ONES-TP";
-        return prefix + orderId;
-    }
+
 
 }

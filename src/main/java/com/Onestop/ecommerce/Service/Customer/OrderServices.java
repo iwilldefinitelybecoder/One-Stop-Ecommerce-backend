@@ -85,21 +85,24 @@ public class OrderServices implements OrdersService {
 
 
 
+
     @Override
     @Transactional
     public String createOrder(OrderRequest orderRequest) {
-        log.info("order request: {}", orderRequest);
         Customer customer = customerServices.getCustomer(orderRequest.getCustomerId());
         boolean paymentStatus = false;
+        Double discount = 0.0;
         if(orderRequest.getCouponId() != null){
-            applyCoupon(orderRequest);
+            Double value = applyCoupon(orderRequest);
+            discount = value;
+            log.info("{}", discount);
         }
 
 
 
         Address shippingAddress = addressRepo.findByIdentifier(orderRequest.getShippingAddressId()).orElseThrow(() -> new RuntimeException("address not found"));
         Address billingAddress = addressRepo.findByIdentifier(orderRequest.getBillingAddressId()).orElseThrow(() -> new RuntimeException("address not found"));
-        Cards card = cardsRepo.findByIdentifier(orderRequest.getCardId()).orElseThrow(() -> new RuntimeException("card not found"));
+
         List<OrderItems> orderItems = new ArrayList<>();
         if(orderRequest.isBuyNow()){
 
@@ -119,7 +122,7 @@ public class OrderServices implements OrdersService {
             productRepo.save((product));
             if(orderRequest.getPaymentMethod().equals(PaymentMethods.DEBITCARD)) {
 
-                log.info("card: {}", orderRequest.isBuyNow());
+
                 paymentStatus = completePayment(orderRequest, customer, orderRequest.getProducts().getQuantity() * salePriceOrRegularPrice(product));
             }
         }else {
@@ -148,6 +151,7 @@ public class OrderServices implements OrdersService {
 
 
         boolean finalPaymentStatus = paymentStatus;
+        Double finalDiscount = discount;
         orderItemsList.forEach(orderItems1 ->   {
             var wareHouse = wareHouseRepo.findByIdentifier(orderItems1.get(0).getProduct().getWareHouse().getIdentifier()).orElseThrow(() -> new RuntimeException("warehouse not found"));
             var order = Orders.builder()
@@ -155,26 +159,49 @@ public class OrderServices implements OrdersService {
                     .orderItems(orderItems1)
                     .billingAddress(billingAddress)
                     .shippingAddress(shippingAddress)
-                    .paymentCard(card)
                     .generatedOrderId(ImplFunction.generateOrderId())
                     .customer(customer)
+                    .discount(finalDiscount)
+                    .taxTotal(orderTotal(orderItems1) * 0.02)
+                    .shippingTotal(orderTotal(orderItems1) * 0.03 + calulateShipping(orderRequest.getShippingType(),orderTotal(orderItems1)))
                     .total(orderTotal(orderItems1))
+                    .grandTotal(orderTotal(orderItems1) + (orderTotal(orderItems1) * 0.02) + calulateShipping(orderRequest.getShippingType(),orderTotal(orderItems1)) - finalDiscount)
                     .paymentStatus(finalPaymentStatus)
                     .status(OrderStatus.ORDERED)
+                    .shipmentMethod(orderRequest.getShippingType())
                     .paymentMethod(orderRequest.getPaymentMethod())
                     .wareHouse(wareHouse)
                     .build();
+            var date = new Date();
+            var calander = Calendar.getInstance();
+            calander.setTime(date);
+            if(orderRequest.getShippingType().equals(ShipmentMethod.STANDARD)){
+
+                calander.add(Calendar.DAY_OF_MONTH ,3);
+                order.setExpectedDeliveryDate(calander.getTime());
+            }else if(orderRequest.getShippingType().equals(ShipmentMethod.EXPRESS)){
+                calander.add(Calendar.DAY_OF_MONTH ,1);
+                order.setExpectedDeliveryDate(calander.getTime());
+            }
+            if(orderRequest.getPaymentMethod().equals(PaymentMethods.DEBITCARD)){
+                Cards card = cardsRepo.findByIdentifier(orderRequest.getCardId()).orElseThrow(() -> new RuntimeException("card not found"));
+                order.setPaymentCard(card);
+            }else{
+                order.setPaymentCard(null);
+            }
+            order = handelShipment(order,wareHouse);
+            ordersRepo.save(order);
+            Orders finalOrder = order;
             orderItems1.forEach(items-> {
-                        createHistory(items.getProduct(), customer, items.getQuantity(),order);
-                        items.setOrders(order);
+                        createHistory(items.getProduct(), customer, items.getQuantity(), finalOrder);
+                        items.setOrders(finalOrder);
                         orderItemsRepo.save(items);
                     });
-            ordersRepo.save(order);
+
             customer.getOrders().add(order);
             wareHouse.getOrders().add(order);
             wareHouseRepo.save(wareHouse);
             customerRepo.save(customer);
-            handelShipment(order,wareHouse);
         });
         updateInventory(orderItems);
         cartServices.emptyCart(customer.getUser().getEmail());
@@ -184,34 +211,46 @@ public class OrderServices implements OrdersService {
 
     }
 
-    private void handelShipment(Orders order, WareHouse wareHouse){
-        var shipment = orderShipment.findByOrdersId(order.getId());
-        if(shipment == null){
-           var  shipment1 = OrderShippment.builder()
-                    .carrier("Ones top")
-                    .date(new Date())
-                    .shippingMethod(ShipmentMethod.STANDARD)
-                    .trackingNumber(ImplFunction.generateTrackingNumber())
-                    .orders(order)
-                    .build();
-
-            var shipmentUpdate = ShipmentUpdates.builder()
-                .date(new Date())
-                .orderShippment(shipment1)
-                .Status(OrderStatus.ORDERED)
-                .action(ShipmentAction.PACKING)
-                .date(new Date())
-                .location(wareHouse.getWareHouseName())
-                .orders(order)
-                .build();
-            shipment1.getShipmentUpdates().add(shipmentUpdate);
-            orderShipment.save(shipment1);
-            shipmentUpdateRepo.save(shipmentUpdate);
+    private Double calulateShipping(ShipmentMethod shippingType, double total){
+        if(shippingType.equals(ShipmentMethod.STANDARD)){
+            return total * 0.03 + 100;
+        }else if(shippingType.equals(ShipmentMethod.EXPRESS)){
+            return total * 0.03 + 300;
         }
+        return 0.0;
     }
 
-    private void applyCoupon(OrderRequest request){
-        couponsServices.applyCoupon(request.getCouponId(), request.getCustomerId());
+    private Orders handelShipment(Orders order, WareHouse wareHouse){
+        order.getOrderItems().forEach((orderItems -> {
+            var trackingId = ImplFunction.generateTrackingNumber();
+
+            var  shipment1 = OrderShippment.builder()
+                    .date(new Date())
+                    .shippingMethod(ShipmentMethod.STANDARD)
+                    .trackingNumber(trackingId)
+                    .shipmentUpdates(new ArrayList<>())
+                    .orderItems(orderItems)
+                    .build();
+            var shipmentUpdate = ShipmentUpdates.builder()
+                .date(new Date())
+                .Status(OrderStatus.ORDERED)
+                    .trackingNumber(trackingId)
+                .action(ShipmentAction.PACKING)
+                .location(wareHouse.getWareHouseName())
+                .build();
+
+            shipment1.getShipmentUpdates().add(shipmentUpdate);
+        shipmentUpdate.setOrderShippment(shipment1);
+        orderShipment.save(shipment1);
+        shipmentUpdateRepo.save(shipmentUpdate);
+
+        }));
+        order.setTrackingId(null);
+        return order;
+    }
+
+    private Double applyCoupon(OrderRequest request){
+      return  couponsServices.applyCoupon(request.getCouponId(), request.getCustomerId());
     }
 
     private String createHistory(Product product, Customer customer, int quantity,Orders orders){
@@ -239,6 +278,7 @@ public class OrderServices implements OrdersService {
           salesHistoryRepo.save(history);
             salesRepo.save(salesData);
             inventory.ifPresent(productInventory -> {
+                productInventory.getWareHouse().setCapacity(productInventory.getWareHouse().getCapacity() - quantity);
                 productInventory.setStock(productInventory.getStock() - quantity);
                 inventoryRepo.save(productInventory);
             });
@@ -330,10 +370,13 @@ public class OrderServices implements OrdersService {
 
     private OrderDetailResponse generateOrderResponse(Orders order) {
         List<ProductListOfOrder> productListOfOrders = new ArrayList<>();
+
         order.getOrderItems().forEach(orderItems -> {
             var purchaseData = purchaseHistory.findByCustomerIdAndProductIdAndOrdersId(order.getCustomer().getId(),orderItems.getProduct().getId(),order.getId());
+            var updates = orderShipment.findByOrderItemsId(orderItems.getId());
             ProductListOfOrder productListOfOrder = ProductListOfOrder.builder()
                     .productId(orderItems.getProduct().getIdentifier())
+                    .trackingId(updates.getTrackingNumber())
                     .quantity(orderItems.getQuantity())
                     .price(orderItems.getItemPrice())
                     .totalPrice(orderItems.getItemTotal())
@@ -342,21 +385,23 @@ public class OrderServices implements OrdersService {
                     .orderItemId(orderItems.getIdentifier())
                     .status(orderItems.getStatus())
                     .build();
+
             productListOfOrders.add(productListOfOrder);
         });
         var summary = OrderSummary.builder()
                 .itemsTotal(order.getTotal())
                 .shippingTotal(order.getShippingTotal())
                 .taxTotal(order.getTaxTotal())
+                .discount(order.getDiscount())
                 .grandTotal(order.getGrandTotal())
                 .build();
 
-        return OrderDetailResponse.builder()
+        var response = OrderDetailResponse.builder()
                 .orderStatus(order.getStatus())
                 .BillingAddressId(order.getBillingAddress().getIdentifier())
                 .ShippingAddressId(order.getShippingAddress().getIdentifier())
-                .deliveryDate(order.getDeliveredDate())
-                .paymentId(order.getPaymentCard().getIdentifier())
+                .deliveryDate(order.getExpectedDeliveryDate())
+                .shippingMethod( order.getShipmentMethod().toString())
                 .orderId(order.getIdentifier())
                 .orderDate(order.getOrderDate())
                 .paymentMethod(order.getPaymentMethod())
@@ -368,6 +413,20 @@ public class OrderServices implements OrdersService {
                 .TrackingId(order.getTrackingId())
                 .orderSummary(summary)
                 .build();
+        if(order.getPaymentMethod().equals(PaymentMethods.COD)){
+           response.setPaymentId(null);
+
+        }else {
+            response.setPaymentId(order.getPaymentCard().getIdentifier());
+        }
+        if(order.getStatus().equals(OrderStatus.DELIVERED)){
+          response.setDeliveryDate(order.getDeliveredDate());
+          response.setReplacementLastDate(order.getReplacementLastDate());
+        }else{
+            response.setDeliveryDate(null);
+            response.setReplacementLastDate(null);
+        }
+        return response;
     }
 
     @Override
@@ -424,8 +483,18 @@ public class OrderServices implements OrdersService {
         return generateOrderResponse(order);
     }
 
-    public List<TrackingData> getOrderItemTrackingData(String orderItemId) {
-    return null;
+    public List<TrackingData> getOrderItemTrackingData(String trackingId) {
+        List<ShipmentUpdates> updates = shipmentUpdateRepo.findAllByTrackingNumber(trackingId);
+        List<TrackingData> data = new ArrayList<>();
+        updates.forEach(shipmentUpdates -> {
+            var trackingData = TrackingData.builder()
+                    .place(shipmentUpdates.getLocation())
+                    .action(shipmentUpdates.getAction())
+                    .timestamp(shipmentUpdates.getDate())
+                    .build();
+            data.add(trackingData);
+        });
+        return data;
     }
 
     public OrderInfo getCustomerOrdersInfo(String userName){
@@ -484,7 +553,7 @@ public class OrderServices implements OrdersService {
     public ReviewDto getReviewMetaInfo(String userName, String purchaseId){
         var history = purchaseHistory.findByIdentifier(purchaseId);
             return ReviewDto.builder()
-                    .productImage(ImplFunction.parseImageURL(history.getProduct().getImages()).get(0))
+//                    .productImage(history.getProduct().getImages() !=null ?ImplFunction.parseImageURL(history.getProduct().getImages()).get(0):null)
                     .productName(history.getProduct().getName())
                     .productId(history.getProduct().getIdentifier())
                     .purchaseDate(history.getPurchaseDate())

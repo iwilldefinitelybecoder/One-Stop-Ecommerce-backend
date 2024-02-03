@@ -184,16 +184,23 @@ public class WishListServices implements WishListService {
     }
 
     @Override
+    @Transactional
     public String moveProductToCart(String customerId, String productId) {
         Customer customer = customerService.getCustomer(customerId);
         WishList wishList = customer.getWishList();
         var product = productsRepo.findByIdentifier(productId).orElseThrow(() -> new RuntimeException("Product not found"));
+        var itemss = customer.getCart().getItems();
+        if(itemss.contains(product)){
+            return "Product already in cart";
+        };
+
         if(product.isEnabled()) {
             Cart cart = cartRepo.findCartByUserEmail(customer.getUser().getEmail());
             Items items = Items.builder()
                     .product(product)
                     .quantity(1)
                     .cart(cart)
+                    .totalPrice(product.getSalePrice() > 0 ? product.getSalePrice() : product.getRegularPrice())
                     .build();
             cart.getItems().add(items);
             cartItemsRepo.save(items);

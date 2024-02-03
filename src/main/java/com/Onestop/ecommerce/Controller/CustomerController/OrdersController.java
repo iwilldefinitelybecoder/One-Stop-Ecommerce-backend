@@ -3,10 +3,16 @@ package com.Onestop.ecommerce.Controller.CustomerController;
 import com.Onestop.ecommerce.Dto.CustomerDto.CardRequest;
 import com.Onestop.ecommerce.Dto.CustomerDto.Orders.OrderRequest;
 import com.Onestop.ecommerce.Service.Customer.OrderServices;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/customer/orders")
@@ -14,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 public class OrdersController {
 
     private final OrderServices orderServices;
+
+
 
     @GetMapping("/getAll")
     public ResponseEntity<?> getAllCartItems(){
@@ -93,11 +101,11 @@ public class OrdersController {
     }
 
     @GetMapping("/getTrackingData")
-    public ResponseEntity<?> getTrackingData(@RequestParam("orderItemId") String orderItemId){
+    public ResponseEntity<?> getTrackingData(@RequestParam("trackingId") String trackingId){
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
         try
         {
-            return ResponseEntity.ok(orderServices.getOrderItemTrackingData(orderItemId));
+            return ResponseEntity.ok(orderServices.getOrderItemTrackingData(trackingId));
         }catch (Exception e){
             return ResponseEntity.badRequest().body(e.getMessage());
         }

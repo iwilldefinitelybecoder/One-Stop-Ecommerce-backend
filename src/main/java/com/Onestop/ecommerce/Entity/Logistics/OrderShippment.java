@@ -1,5 +1,6 @@
 package com.Onestop.ecommerce.Entity.Logistics;
 
+import com.Onestop.ecommerce.Entity.orders.OrderItems;
 import com.Onestop.ecommerce.Entity.orders.Orders;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -33,8 +34,8 @@ public class OrderShippment {
     private List<ShipmentUpdates> shipmentUpdates = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id")
-    private Orders orders;
+    @JoinColumn(name = "order_items_id")
+    private OrderItems orderItems;
 
     @PrePersist
     public void prePersist(){

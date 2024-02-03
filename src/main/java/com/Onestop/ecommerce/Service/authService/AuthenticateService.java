@@ -4,8 +4,11 @@ package com.Onestop.ecommerce.Service.authService;
 import com.Onestop.ecommerce.Controller.authUser.AuthenticateRequest;
 import com.Onestop.ecommerce.Controller.authUser.AuthenticationResponse;
 import com.Onestop.ecommerce.Controller.authUser.RegisterRequest;
+import com.Onestop.ecommerce.Entity.UserMessages.MessageAction;
+import com.Onestop.ecommerce.Entity.UserMessages.MessageStatus;
 import com.Onestop.ecommerce.Entity.user.RoleEntity;
 import com.Onestop.ecommerce.Entity.user.userEntity;
+import com.Onestop.ecommerce.Events.Emmitter.MessageEmitter;
 import com.Onestop.ecommerce.Exceptions.UserAlreadyExistsException;
 import com.Onestop.ecommerce.Exceptions.UserEmailNotVerifiedException;
 import com.Onestop.ecommerce.Exceptions.UserNotfoundException;
@@ -17,6 +20,7 @@ import com.Onestop.ecommerce.Service.Customer.WishListServices;
 import com.Onestop.ecommerce.configuration.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -41,6 +45,8 @@ public class AuthenticateService {
     private final AuthenticationManager authenticationManager;
     private final CustomerServices customerServices;
 
+    private final ApplicationEventPublisher applicationEventPublisher;
+
     public AuthenticationResponse register(RegisterRequest registerRequest)throws UserAlreadyExistsException {
         var userExists = userRespository.findByEmail(registerRequest.getEmail());
         if (userExists.isPresent()) {
@@ -63,6 +69,11 @@ public class AuthenticateService {
         for (RoleEntity role : user1.getRoles()) {
             roles.add(role.getName());
         }
+
+        applicationEventPublisher.publishEvent(new MessageEmitter("Welcome to One Stop Ecommerce – Your one-click solution for all your shopping needs! \uD83D\uDED2 Dive into a world of convenience and quality. Happy shopping! \uD83C\uDF89",
+                MessageAction.WELCOME,
+                MessageStatus.UNSEEN,
+                user1));
 
         return AuthenticationResponse.builder()
                 .token(jwtToken)

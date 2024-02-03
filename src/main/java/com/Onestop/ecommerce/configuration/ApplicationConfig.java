@@ -1,5 +1,6 @@
 package com.Onestop.ecommerce.configuration;
 
+import com.Onestop.ecommerce.Exceptions.UserNotfoundException;
 import com.Onestop.ecommerce.Repository.userRepo.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +23,7 @@ public class ApplicationConfig {
     public UserDetailsService userDetailsService(){
         return username -> userRepository.findByEmail(username)
 
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotfoundException("User not found"));
     }
 
     @Bean

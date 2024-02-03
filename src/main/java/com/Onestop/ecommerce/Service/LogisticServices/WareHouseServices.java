@@ -48,7 +48,7 @@ public class WareHouseServices implements WareHouseService{
             var wareHouseResponse = WarehouseResponse.builder()
                     .warehouseId(wareHouse1.getIdentifier())
                     .wareHouseName(wareHouse1.getWareHouseName())
-                    .storageLeft( wareHouse1.getInventory().size() - wareHouse1.getCapacity())
+                    .storageLeft(wareHouse1.getCapacity() - wareHouse1.getInventory().size()  )
                     .build();
             wareHouseList.add(wareHouseResponse);
         });

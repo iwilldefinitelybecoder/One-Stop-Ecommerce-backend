@@ -22,6 +22,7 @@ public class ProductResponse {
     private Date innDate;
     private Map<String,?> extraAttributes;
     private long numberOfRatings;
+    private String thumbnail;
     private boolean isPublished;
     private String brand;
     private String vendorName;

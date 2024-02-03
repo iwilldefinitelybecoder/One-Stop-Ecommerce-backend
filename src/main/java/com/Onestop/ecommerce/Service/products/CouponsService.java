@@ -12,7 +12,7 @@ public interface CouponsService {
     String addCoupon(AddCouponsRequest addCouponsRequest);
     String deleteCoupon(String couponId);
     String updateCoupon(AddCouponsRequest addCouponsRequest,String couponId);
-    String applyCoupon(String couponId,String email);
+    Double applyCoupon(String couponId,String email);
     HashMap<String, String> validateCoupon(String couponId, String email);
 
 
