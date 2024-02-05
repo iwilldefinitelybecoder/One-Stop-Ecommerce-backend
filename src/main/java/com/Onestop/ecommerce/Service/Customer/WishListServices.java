@@ -52,7 +52,7 @@ public class WishListServices implements WishListService {
                     .description(product.getDescription())
                     .category(product.getCategory())
                     .regularPrice(product.getRegularPrice())
-                    .imageURL(ImplFunction.parseImageURL(product.getImages()))
+                    .imageURL(ImplFunction.pareImageURLToMap(product.getImages()))
                     .productId(product.getIdentifier())
                     .isPublished(product.isEnabled())
                     .numberOfRatings(product.getReviews().size())

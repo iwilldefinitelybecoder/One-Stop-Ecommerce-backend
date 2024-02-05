@@ -4,15 +4,13 @@ import com.Onestop.ecommerce.Entity.orders.OrderStatus;
 import com.Onestop.ecommerce.Entity.orders.Orders;
 import com.Onestop.ecommerce.Entity.products.Product;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Date;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

@@ -15,7 +15,7 @@ import java.util.List;
 public class ProductMinorDetails {
     private String productId;
     private String name;
-    private List<String> imageURL;
+    private String imageURL;
     private Double regularPrice;
     private Double salePrice;
     private Integer stock;

@@ -3,9 +3,7 @@ package com.Onestop.ecommerce.utils;
 import com.Onestop.ecommerce.Entity.products.ReviewImageResource;
 import com.Onestop.ecommerce.Entity.products.resourceDetails;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class ImplFunction {
 
@@ -16,6 +14,34 @@ public class ImplFunction {
             imageURL.add(url);
         });
         return imageURL;
+    }
+
+    public static List<Map<String,String>> pareImageURLToMap(List<resourceDetails> images){
+        List<Map<String,String>> imageUrl = new ArrayList<>();
+        images.forEach(image->{
+            Map<String,String> images1 =new HashMap<>();
+            var downSizedImg = "http://localhost:8000/image-resources/product-Images/" + image.getDownSizedUrl();
+            var normalImage = "http://localhost:8000/image-resources/product-Images/" + image.getUrl();
+            images1.put("imageURL",normalImage);
+            images1.put("imagePreview",downSizedImg);
+            imageUrl.add(images1);
+        });
+        return imageUrl;
+    }
+
+    public static Map<String,String> pareImageURLToMap(resourceDetails images){
+
+            Map<String,String> images1 =new HashMap<>();
+            var downSizedImg = "http://localhost:8000/image-resources/product-Images/" + images.getDownSizedUrl();
+            var normalImage = "http://localhost:8000/image-resources/product-Images/" + images.getUrl();
+            images1.put("imageURL",normalImage);
+            images1.put("imagePreview",downSizedImg);
+
+        return images1;
+    }
+
+    public static String parsePreviewImageURL(resourceDetails images){
+        return  "http://localhost:8000/image-resources/product-Images/" + images.getDownSizedUrl();
     }
     public static String parseImageURL(resourceDetails images){
 

@@ -58,7 +58,7 @@ public class productController {
 //        Map<String,Object> extraAttributes1 = (Map<String, Object>) extraAttributes.get("extraAttributes");
 
 
-
+        System.out.println(request.getExtraAttributes());
         var userName = SecurityContextHolder.getContext().getAuthentication().getName();
         var images1 = resourceDetailsTdo.builder()
                 .image(images)

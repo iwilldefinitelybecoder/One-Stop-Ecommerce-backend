@@ -1,12 +1,10 @@
 package com.Onestop.ecommerce.Entity.products;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,6 +15,7 @@ public class ReviewImageResource {
     private Long id;
     private String name;
     private String url;
+    private String downSizedUrl;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "review_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FK_review_id"))

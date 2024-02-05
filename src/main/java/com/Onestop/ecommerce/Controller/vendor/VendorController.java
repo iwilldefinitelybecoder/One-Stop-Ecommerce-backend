@@ -21,7 +21,7 @@ public class VendorController {
     private final ProductsServices productsServices;
 
      @PostMapping("/register")
-    public ResponseEntity<?> authenticate(@RequestBody VendorRequest request) {
+    public ResponseEntity<?> authenticate(@ModelAttribute VendorRequest request) {
         return ResponseEntity.status(200).body(services.register(request));
     }
 

@@ -5,16 +5,14 @@ import com.Onestop.ecommerce.Entity.products.Product;
 
 import com.Onestop.ecommerce.Entity.vendor.Vendor;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Date;
 import java.util.UUID;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

@@ -17,21 +17,34 @@ public interface productsRepo extends JpaRepository<Product, Long> {
 //    Product findProductWithImagesAndTagsById(@Param("productId") Long id);
     Optional<Product> findByIdentifier(String productIdentifier);
 
-    @Query(value = "SELECT * FROM products WHERE (:keyword IS NULL OR POSITION(:keyword IN name) > 0) AND (COALESCE(:category, '') = '' OR category = :category)", nativeQuery = true)
+    @Query(value = "SELECT * FROM products WHERE (:keyword IS NULL OR POSITION(LOWER(:keyword) IN LOWER(name)) > 0) AND (COALESCE(:category, '') = '' OR category = :category)", nativeQuery = true)
     List<Product> findProductsByRegex(@Param("keyword") String keyword, @Param("category") String category);
 
 
+
     @Query(value = "SELECT * FROM products " +
-            "WHERE (:keyword IS NULL OR POSITION(:keyword IN name) > 0) " +
+            "WHERE (:keyword IS NULL OR POSITION(LOWER(:keyword) IN LOWER(name)) > 0) " +
             "AND ((:categories IS NULL OR :categories = '{}') OR category IN (:categories)) " +
-            "AND (:averageRating IS NULL OR average_rating  >= :averageRating) " +
-//            "AND (:priceRange IS NULL OR COALESCE(sale_price, regular_price) BETWEEN :priceRange[0] AND :priceRange[1]) " +
-            "ORDER BY average_rating DESC NULLS LAST",
+            "AND (:averageRating IS NULL OR average_rating >= :averageRating) ",
+              // Case-insensitive order by the position of the keyword
             nativeQuery = true)
-    Page<Product> findProductsByRegexPageable(@Param("keyword") String keyword,
-                                              @Param("categories") List<String> categories,
-                                              @Param("averageRating") Double averageRating,
-                                              Pageable pageable);
+    Page<Product> searchProducts(@Param("keyword") String keyword,
+                                 @Param("categories") List<String> categories,
+                                 @Param("averageRating") Double averageRating
+                                            ,Pageable pageable);
+
+//    @Query(value = "SELECT * FROM products " +
+//            "WHERE (:keyword IS NULL OR POSITION(:keyword IN name) > 0) " +
+//            "AND ((:categories IS NULL OR :categories = '{}') OR category IN (:categories)) " +
+//            "AND (:averageRating IS NULL OR average_rating  >= :averageRating) " +
+//          "AND (:priceRange IS NULL OR COALESCE(sale_price, regular_price) BETWEEN :priceRange[0] AND :priceRange[1]) " +
+//            "ORDER BY average_rating DESC NULLS LAST",
+//            nativeQuery = true)
+//    Page<Product> findProductsByRegexPageable(@Param("keyword") String keyword,
+//                                              @Param("categories") List<String> categories,
+//                                              @Param("averageRating") Double averageRating,
+//                                              Pageable pageable);
+
 
 
 

@@ -6,13 +6,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class ProductViewDto {
-    private List<String> imageURL;
     private double rating;
     private String name;
     private boolean published;
@@ -20,6 +20,8 @@ public class ProductViewDto {
     private Integer stock;
     private Double salePrice;
     private Double regularPrice;
-    private String thumbnail;
+    private Map<String,String> thumbnail;
     private String category;
+    private String imagePreview;
+    private List<Map<String,String>> imageURL;
 }

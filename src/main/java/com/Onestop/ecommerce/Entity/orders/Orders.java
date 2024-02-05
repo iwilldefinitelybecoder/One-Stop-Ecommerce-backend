@@ -8,10 +8,7 @@ import com.Onestop.ecommerce.Entity.Logistics.ShipmentMethod;
 import com.Onestop.ecommerce.Entity.Logistics.WareHouse;
 import com.Onestop.ecommerce.Entity.Payments.PaymentMethods;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 
 import java.util.ArrayList;
@@ -20,7 +17,8 @@ import java.util.Date;
 import java.util.UUID;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

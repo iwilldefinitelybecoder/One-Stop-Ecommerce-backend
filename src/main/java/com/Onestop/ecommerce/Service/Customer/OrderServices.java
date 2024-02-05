@@ -51,7 +51,7 @@ import java.util.*;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class OrderServices implements OrdersService {
+public class  OrderServices implements OrdersService {
 
 
     ImplFunction implFunction = new ImplFunction();
@@ -134,7 +134,7 @@ public class OrderServices implements OrdersService {
                         .product(product)
                         .quantity(item.getQuantity())
                         .itemTotal(item.getQuantity() * product.getSalePrice())
-                        .itemPrice(product.getSalePrice())
+                        .itemPrice(salePriceOrRegularPrice(product))
                         .status(OrderStatus.ORDERED)
                         .vendor(product.getVendor())
                         .build();
@@ -190,16 +190,16 @@ public class OrderServices implements OrdersService {
                 order.setPaymentCard(null);
             }
             order = handelShipment(order,wareHouse);
-            ordersRepo.save(order);
             Orders finalOrder = order;
+            ordersRepo.save(finalOrder);
             orderItems1.forEach(items-> {
-                        createHistory(items.getProduct(), customer, items.getQuantity(), finalOrder);
-                        items.setOrders(finalOrder);
-                        orderItemsRepo.save(items);
-                    });
+                createHistory(items.getProduct(), customer, items.getQuantity(), finalOrder);
+                items.setOrders(finalOrder);
+                orderItemsRepo.save(items);
+            });
 
-            customer.getOrders().add(order);
-            wareHouse.getOrders().add(order);
+            customer.getOrders().add(finalOrder);
+            wareHouse.getOrders().add(finalOrder);
             wareHouseRepo.save(wareHouse);
             customerRepo.save(customer);
         });
@@ -254,7 +254,6 @@ public class OrderServices implements OrdersService {
     }
 
     private String createHistory(Product product, Customer customer, int quantity,Orders orders){
-        var inventory = inventoryRepo.findByProductIdentifier(product.getIdentifier());
         SalesData salesData = salesRepo.findByProductIdentifier(product.getIdentifier());
         UserPurchaseHistory userPurchaseHistory = UserPurchaseHistory.builder()
                 .customer(customer)
@@ -277,11 +276,7 @@ public class OrderServices implements OrdersService {
        salesData.getSalesHistory().add(history);
           salesHistoryRepo.save(history);
             salesRepo.save(salesData);
-            inventory.ifPresent(productInventory -> {
-                productInventory.getWareHouse().setCapacity(productInventory.getWareHouse().getCapacity() - quantity);
-                productInventory.setStock(productInventory.getStock() - quantity);
-                inventoryRepo.save(productInventory);
-            });
+
 
             return "SALES_HISTORY_CREATED";
     }
@@ -353,6 +348,8 @@ public class OrderServices implements OrdersService {
             inventory.forEach(productInventory -> {
                 if (productInventory.getProduct().equals(product)) {
                     productInventory.setStock(productInventory.getStock() - orderItem.getQuantity());
+                    var storage = productInventory.getProduct().getWareHouse().getCapacity()
+;                    productInventory.getProduct().getWareHouse().setCapacity(storage - orderItem.getQuantity());
                     inventoryRepo.save(productInventory);
                 }
             });

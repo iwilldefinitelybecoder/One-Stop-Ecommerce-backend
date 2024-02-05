@@ -3,16 +3,14 @@ package com.Onestop.ecommerce.Entity.products;
 import com.Onestop.ecommerce.Entity.Customer.Customer;
 import com.Onestop.ecommerce.Entity.Customer.UserPurchaseHistory;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor

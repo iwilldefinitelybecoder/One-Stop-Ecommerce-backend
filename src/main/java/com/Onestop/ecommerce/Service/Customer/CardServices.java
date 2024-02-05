@@ -55,7 +55,7 @@ public class CardServices implements CardService {
         var cards = customer.getPaymentCards();
         var card = cardsRepo.findByIdentifier(cardRequest.getCardId()).orElse(null);
         if(cards.contains(card)){
-            return "Card already exists";
+            return "CARD_EXISTS";
         }
         Long cardNumber = Long.parseLong(cardRequest.getCardNumber().replaceAll("\\s+",""));
         var newCard = Cards.builder()
@@ -71,7 +71,7 @@ public class CardServices implements CardService {
         cards.add(newCard);
         customer.setPaymentCards(cards);
         customerRepo.save(customer);
-        return "Card added successfully";
+        return "SUCCESS";
     }
 
     private LocalDate formatToLocalDate(String date){
@@ -104,7 +104,7 @@ public class CardServices implements CardService {
         customer.setPaymentCards(cards);
         customerRepo.save(customer);
         cardsRepo.delete(card);
-        return "Card deleted successfully";
+        return "SUCCESS";
     }
 
     @Override
@@ -119,7 +119,7 @@ public class CardServices implements CardService {
         card.setCvc(cardRequest.getCvc());
         card.setType(cardRequest.getCardType());
         cardsRepo.save(card);
-        return "Card updated successfully";
+        return "SUCCESS";
     }
 
     @Override

@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.beanutils.BeanMap;
+import org.json.JSONObject;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
@@ -30,23 +32,10 @@ public class productsDto {
     private String wareHouseId;
     private List<String> image;
     private String thumbnail;
+    private Map<String,Object> extraObjects;
     private List<String> existingImages;
-//    private Map<String, Object> extraAttributes = new HashMap<>();
-//
-//    @JsonAnySetter
-//    public void setExtraAttributes(String key, Object value) {
-//        this.extraAttributes.put(key, value);
-//    }
-//
-//    public void setExtraAttributes(String extraAttributes) {
-//        ObjectMapper mapper = new ObjectMapper();
-//        try {
-//            this.extraAttributes = mapper.readValue(extraAttributes, new TypeReference<Map<String, Object>>() {
-//            });
-//        } catch (Exception e) {
-//            // Handle exception if JSON parsing fails
-//            e.printStackTrace();
-//        }
-//
-//    }
+    private String extraAttributes;
+
+
+
 }

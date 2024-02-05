@@ -3,10 +3,7 @@ package com.Onestop.ecommerce.Entity.Logistics;
 import com.Onestop.ecommerce.Entity.orders.OrderItems;
 import com.Onestop.ecommerce.Entity.orders.Orders;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,7 +11,8 @@ import java.util.List;
 import java.util.Random;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

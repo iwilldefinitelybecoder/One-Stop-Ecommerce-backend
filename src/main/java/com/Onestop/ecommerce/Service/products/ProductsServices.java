@@ -26,9 +26,15 @@ import com.Onestop.ecommerce.Repository.VendorRepo.SalesRepo;
 import com.Onestop.ecommerce.Repository.VendorRepo.VendorRepository;
 import com.Onestop.ecommerce.Repository.products.*;
 import com.Onestop.ecommerce.Service.Customer.CustomerServices;
+import com.Onestop.ecommerce.utils.ImageService;
 import com.Onestop.ecommerce.utils.ImplFunction;
+import com.Onestop.ecommerce.utils.JsonUtils;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.imaging.ImageReadException;
+import org.apache.commons.imaging.ImageWriteException;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -100,6 +106,8 @@ public class ProductsServices implements productServices {
     @Autowired
     private PurchaseHistory purchaseHistory;
 
+    private final ImageService imageService = new ImageService();
+
 
 
     private Vendor getVendor(String email){
@@ -110,11 +118,21 @@ public class ProductsServices implements productServices {
     @Transactional
     public String saveProduct(productsDto request,resourceDetailsTdo images,String email,MultipartFile thumbnailFile) {
         var vendor = getVendor(email);
-//        var extraAttributes = ProductExtraAttributes.builder()
-//                .extraAttributes(extraAttributess)
-//                .productId(null)
-//                .build();
-//        String newAttributeId = productExtraAttributesRepo.save(extraAttributes).getId();
+        ProductExtraAttributes extraAttributes = null;
+        try {
+        if(!request.getExtraAttributes().isEmpty()) {
+            JSONObject jsonObject = new JSONObject(request.getExtraAttributes());
+            extraAttributes = ProductExtraAttributes.builder()
+                    .extraAttributes(JsonUtils.jsonToMap(jsonObject))
+                    .productId(null)
+                    .build();
+        }
+        }catch (JSONException e){
+            e.printStackTrace();
+        }
+
+        assert extraAttributes != null;
+        String newAttributeId = productExtraAttributesRepo.save(extraAttributes).getId();
         List<Tags> newTags = new ArrayList<>();
         for(String tag: request.getTags()){
             var tag1 = tagsRepo.findByName(tag);
@@ -133,7 +151,7 @@ public class ProductsServices implements productServices {
                 .wareHouse(wareHouse)
                 .images(new ArrayList<>())
                 .reviews(new ArrayList<>())
-//                .extraAttributesId(newAttributeId)
+                .extraAttributesId(newAttributeId)
                 .regularPrice(request.getRegularPrice())
                 .tags(newTags)
                 .salePrice(request.getSalePrice() !=0?request.getSalePrice():0)
@@ -161,7 +179,7 @@ public class ProductsServices implements productServices {
             inventoryRepo.save(inventoryProduct);
             wareHouseRepo.save(wareHouse);
             specialAttributesRepo.save(meta);
-            return product.getId().toString();
+            return "SUCCESS";
         } catch (Exception e) {
             log.error(e.getMessage());
             return "error";
@@ -178,56 +196,57 @@ public class ProductsServices implements productServices {
         List<resourceDetails> ResourceDetails = new ArrayList<>();
         for (MultipartFile image : images.getImage()) {
             try {
-                HashMap response = SaveImageTOFs(image);
-                if (response.get("originalFileName") != null && response.get("destination") != null) {
-
+                ResourceInfo response = SaveImageTOFs(image);
+                if(response == null){
+                    return null;
+                }
                     var resource = resourceDetails.builder()
-                            .name(response.get("originalFileName").toString())
-                            .url(response.get("newFileName").toString())
+                            .name(response.getOriginalFileName())
+                            .url(response.getNewFileName())
+                            .downSizedUrl(response.getDownSizedFileName())
                             .product(product)
                             .build();
 
                     resourceRepo.save(resource);
                     ResourceDetails.add(resource);
 
-                } else {
-                    // Handle the case where image details are missing or invalid
-                    return null;
 
-                }
             } catch (IOException e) {
                 log.error("error from image");
                 e.printStackTrace();
                 return null; // Set success to false in case of an exception
 
+            } catch (ImageWriteException | ImageReadException e) {
+                throw new RuntimeException(e);
             }
         }
        product.getImages().addAll(ResourceDetails);
 
         if(thumbnailFile != null){
             try {
-                HashMap response = SaveImageTOFs(thumbnailFile);
-                if (response.get("originalFileName") != null && response.get("destination") != null) {
-
-                    var resource = resourceDetails.builder()
-                            .name(response.get("originalFileName").toString())
-                            .url(response.get("newFileName").toString())
-                            .product(product)
-                            .build();
-
-                    resourceRepo.save(resource);
-                    product.setThumbnail(resource);
-
-                } else {
-
+                ResourceInfo response = SaveImageTOFs(thumbnailFile);
+                if(response == null){
                     return null;
-
                 }
+                var resource = resourceDetails.builder()
+                        .name(response.getOriginalFileName())
+                        .url(response.getNewFileName())
+                        .downSizedUrl(response.getDownSizedFileName())
+                        .product(product)
+                        .build();
+
+                resourceRepo.save(resource);
+                ResourceDetails.add(resource);
+                product.setThumbnail(resource);
+
+
             } catch (IOException e) {
                 log.error("error from thumbnail");
                 e.printStackTrace();
                 return null; // Set success to false in case of an exception
 
+            } catch (ImageWriteException | ImageReadException e) {
+                throw new RuntimeException(e);
             }
         }
         return product;
@@ -238,24 +257,22 @@ public class ProductsServices implements productServices {
         List<ReviewImageResource> ResourceDetails = new ArrayList<>();
         for (MultipartFile image : images) {
             try {
-                HashMap response = SaveImageTOFs(image);
-                if (response.get("originalFileName") != null && response.get("destination") != null) {
-
-                    var resource = ReviewImageResource.builder()
-                            .name(response.get("originalFileName").toString())
-                            .url(response.get("newFileName").toString())
-                            .review(review)
-                            .build();
-
-                    reviewResourceRepo.save(resource);
-                    ResourceDetails.add(resource);
-
-                } else {
-                    // Handle the case where image details are missing or invalid
-                    success = false;
-
+                ResourceInfo response = SaveImageTOFs(image);
+                if(response == null){
+                    return null;
                 }
-            } catch (IOException e) {
+                var resource = ReviewImageResource.builder()
+                                .name(response.getOriginalFileName())
+                                        .url(response.getNewFileName())
+                                                .downSizedUrl(response.getDownSizedFileName())
+                                                        .review(review)
+                                                                .build();
+
+                reviewResourceRepo.save(resource);
+                ResourceDetails.add(resource);
+
+
+            } catch (IOException | ImageWriteException | ImageReadException e) {
                 e.printStackTrace();
                 success = false; // Set success to false in case of an exception
 
@@ -274,15 +291,15 @@ public class ProductsServices implements productServices {
         }
     }
 
-    private boolean deleteFiles(Product product) {
-        var ResourceDetails = resourceRepo.findByProductId(product.getId()).orElseThrow(()-> new RuntimeException("image not found"));
-        List<String> fileNames = ResourceDetails.stream().map(resourceDetails::getUrl).toList();
+    private <T> void deleteFiles(T fileName) {
+
         boolean success = true;
         String directoryPath = "C:/Users/tonys/Downloads/product-Images/";
+        File file = new File(directoryPath + fileName);
 
-        for (String fileName : fileNames) {
-            File file = new File(directoryPath + fileName);
-
+// Check if the file is in the correct directory
+        if (file.getParent().equals(directoryPath)) {
+            System.out.println("File Directory: " + file.getParent());  // Print the directory
             if (file.exists()) {
                 if (file.delete()) {
                     System.out.println(fileName + " deleted successfully.");
@@ -294,14 +311,18 @@ public class ProductsServices implements productServices {
                 System.out.println(fileName + " does not exist.");
                 success = false;
             }
+        } else {
+            System.out.println(fileName + " is not in the correct directory.");
+            success = false;
         }
 
-        return success;
+
     }
 
 
 
     @Override
+    @Deprecated
     public List<ProductResponse> getProducts() {
         List<ProductResponse> products = new ArrayList<>();
         productsRepo.findAll().forEach(product -> {
@@ -314,7 +335,7 @@ public class ProductsServices implements productServices {
                     .description(product.getDescription())
                     .category(product.getCategory())
                     .regularPrice(product.getRegularPrice())
-                    .imageURL(parseImageURL(product.getImages()))
+                    .imageURL(ImplFunction.pareImageURLToMap(product.getImages()))
                     .productId(product.getIdentifier())
                     .numberOfRatings(product.getReviews().size())
                     .rating(product.getAverageRating())
@@ -344,7 +365,11 @@ public class ProductsServices implements productServices {
         }
         List<Product> products = productsRepo.findProductsByRegex(keyword, category);
         if (!products.isEmpty()) {
-            return products.stream().map(Product::getName).toList();
+            return products.stream()
+                    .sorted(Comparator.comparing(Product::getAverageRating).reversed())
+                    .limit(6)
+                    .map(Product::getName)
+                    .collect(Collectors.toList());
         } else {
             return Collections.emptyList();
         }
@@ -400,7 +425,7 @@ public class ProductsServices implements productServices {
         String finalKeyword = keyword;
         Double[] finalRange = range;
 
-        Page<Product> products = productsRepo.findProductsByRegexPageable(finalKeyword, categories, averageRating, pageable);
+        Page<Product> products = productsRepo.searchProducts(finalKeyword, categories, averageRating, pageable);
         products.forEach(product -> {
             if (!product.isEnabled()) {
                 return;
@@ -410,9 +435,13 @@ public class ProductsServices implements productServices {
                     .description(product.getDescription())
                     .category(product.getCategory())
                     .regularPrice(product.getRegularPrice())
-                    .imageURL(parseImageURL(product.getImages()))
+                    .imageURL(ImplFunction.pareImageURLToMap(product.getImages()))
                     .productId(product.getIdentifier())
+                    .thumbnail(product.getThumbnail() !=null ?ImplFunction.pareImageURLToMap(product.getThumbnail()):null)
                     .numberOfRatings(product.getReviews().size())
+                    .brand(product.getBrand())
+                    .vendorName(product.getVendor().getVendorCompanyName())
+                    .stock(product.getStock())
                     .rating(product.getAverageRating())
                     .build();
             if (product.getSalePrice() != 0) {
@@ -498,13 +527,14 @@ public class ProductsServices implements productServices {
                     .brand(product.getProduct().getBrand())
                     .vendorName(product.getProduct().getVendor().getVendorCompanyName())
                     .regularPrice(product.getProduct().getRegularPrice())
-                    .imageURL(parseImageURL(product.getProduct().getImages()))
+                    .imageURL(ImplFunction.pareImageURLToMap(product.getProduct().getImages()))
                     .productId(product.getProduct().getIdentifier())
                     .stock(product.getProduct().getStock())
                     .isPublished(product.getProduct().isEnabled())
                     .numberOfRatings(product.getProduct().getReviews().size())
                     .rating(product.getProduct().getAverageRating())
-                    .thumbnail(product.getProduct().getThumbnail() !=null ?ImplFunction.parseImageURL(product.getProduct().getThumbnail()):null)
+                    .imagePreview(product.getProduct().getThumbnail() !=null ?ImplFunction.parsePreviewImageURL(product.getProduct().getThumbnail()):ImplFunction.parsePreviewImageURL(product.getProduct().getImages().get(0)))
+                    .thumbnail(product.getProduct().getThumbnail() !=null ?ImplFunction.pareImageURLToMap(product.getProduct().getThumbnail()):null)
                     .build();
             if(product.getProduct().getSalePrice() != 0){
                 response.setSalePrice(product.getProduct().getSalePrice());
@@ -526,7 +556,25 @@ public class ProductsServices implements productServices {
         var inventory = inventoryRepo.findByProductIdentifier(productId)
                 .orElseThrow(() -> new RuntimeException("inventory not found"));
 
+        product.setThumbnail(null);
         var existingImages = resourceRepo.findByProductId(product.getId());
+        if(product.getExtraAttributesId() == null){
+            JSONObject object = new JSONObject(request.getExtraAttributes());
+            ProductExtraAttributes extraAttributes = ProductExtraAttributes.builder()
+                    .extraAttributes(JsonUtils.jsonToMap(object))
+                    .productId(product.getIdentifier())
+                    .build();
+            productExtraAttributesRepo.save(extraAttributes);
+            product.setExtraAttributesId(extraAttributes.getId());
+        }else{
+
+            var extraAttributes = productExtraAttributesRepo.findById(product.getExtraAttributesId());
+            if(extraAttributes.isPresent()){
+                JSONObject object = new JSONObject(request.getExtraAttributes());
+                extraAttributes.get().setExtraAttributes(JsonUtils.jsonToMap(object));
+                productExtraAttributesRepo.save(extraAttributes.get());
+            }
+        }
 
 
         // Remove images that are not in the request
@@ -587,12 +635,14 @@ public class ProductsServices implements productServices {
             finalProduct.getImages().remove(image);
             productsRepo.save(finalProduct);
             resourceRepo.delete(image);
+            deleteFiles(image.getUrl());
+            deleteFiles(image.getDownSizedUrl());
 
         });
         try {
             inventoryRepo.save(inventory);
             productsRepo.save(finalProduct);
-            return "success";
+            return "SUCCESS";
         } catch (Exception e) {
             log.error(e.getMessage());
             return "error";
@@ -649,8 +699,13 @@ public class ProductsServices implements productServices {
     public productsDto getEditProductDetails(String productId){
         var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
 //        var attributes = specialAttributesRepo.findByProductId(product.getId());
-        var tags = product.getTags().stream().map(tags1 -> tags1.getName()).toList();
-//        var extraAttributes = productExtraAttributesRepo.findById(product.getExtraAttributesId()).orElseThrow(()-> new RuntimeException("product not found"));
+        var tags = product.getTags().stream().map(Tags::getName).toList();
+       Optional<ProductExtraAttributes> extraAttributes  = Optional.empty();
+        if(product.getExtraAttributesId() != null){
+             extraAttributes = productExtraAttributesRepo.findById(product.getExtraAttributesId());
+        }
+
+        assert extraAttributes.isPresent();
         return productsDto.builder()
                 .name(product.getName())
                 .description(product.getDescription())
@@ -663,7 +718,7 @@ public class ProductsServices implements productServices {
                 .salePrice(product.getSalePrice())
                 .image(product.getImages() !=null ?ImplFunction.parseImageURL(product.getImages()):null)
                 .thumbnail(product.getThumbnail() !=null ?ImplFunction.parseImageURL(product.getThumbnail()):null)
-//                .extraAttributes(extraAttributes.getExtraAttributes())
+                .extraObjects(extraAttributes.map(ProductExtraAttributes::getExtraAttributes).orElse(null))
                 .build();
     }
 
@@ -683,24 +738,24 @@ public class ProductsServices implements productServices {
     @Override
     public ProductResponse getProduct(String productId) {
         var product = productsRepo.findByIdentifier(productId).orElseThrow(()-> new RuntimeException("product not found"));
-//        Optional<ProductExtraAttributes> extraAttribute = null;
-//        if(product.getExtraAttributesId() != null){
-//            extraAttribute = productExtraAttributesRepo.findById(product.getExtraAttributesId());
-//        }
+        Optional<ProductExtraAttributes> extraAttribute = Optional.empty();
+        if(product.getExtraAttributesId() != null){
+            extraAttribute = productExtraAttributesRepo.findById(product.getExtraAttributesId());
+        }
 
 
-//        assert extraAttribute != null;
+        assert extraAttribute != null;
         var response = ProductResponse.builder()
                 .name(product.getName())
                 .description(product.getDescription())
                 .category(product.getCategory())
                 .regularPrice(product.getRegularPrice())
-                .imageURL(parseImageURL(product.getImages()))
+                .imageURL(ImplFunction.pareImageURLToMap(product.getImages()))
                 .brand(product.getBrand())
                 .vendorName(product.getVendor().getVendorCompanyName())
                 .productId(product.getIdentifier())
                 .numberOfRatings(product.getReviews().size())
-//                .extraAttributes(extraAttribute.<Map<String, ?>>map(ProductExtraAttributes::getExtraAttributes).orElse(null))
+                .extraAttributes(extraAttribute.<Map<String, ?>>map(ProductExtraAttributes::getExtraAttributes).orElse(null))
                 .rating(product.getAverageRating())
                 .stock(product.getStock())
                 .isPublished(product.isEnabled())
@@ -728,6 +783,7 @@ public class ProductsServices implements productServices {
 //                    .imageURL(parseImageURL(product.getImages().get(0)))
                     .regularPrice(product.getRegularPrice())
                     .salePrice(product.getSalePrice())
+                    .imageURL(product.getThumbnail() != null? ImplFunction.parseImageURL(product.getThumbnail()) : ImplFunction.parseImageURL(product.getImages().get(0)))
                     .innDate(product.getProductInventory().getInDate())
                     .stock(product.getStock())
                     .build();
@@ -821,17 +877,17 @@ public class ProductsServices implements productServices {
 
 
     private List<String> parseImageURL(List<resourceDetails> images){
-        List<String> imageURL = new ArrayList<>();
+        Set<String> imageURL = new HashSet<>();
         images.forEach(image -> {
             var url = "http://localhost:8000/image-resources/product-Images/" + image.getUrl();
             imageURL.add(url);
         });
-        return imageURL;
+        return new ArrayList<>(imageURL);
     }
 
 
 
-    public  HashMap SaveImageTOFs(MultipartFile image) throws IOException {
+    public ResourceInfo SaveImageTOFs(MultipartFile image) throws IOException, ImageWriteException, ImageReadException {
         String userHome = System.getProperty("user.home");
         String downloadsDir = userHome + "\\Downloads\\product-Images\\";
         Path directoryPath = Path.of(downloadsDir);
@@ -839,10 +895,28 @@ public class ProductsServices implements productServices {
             Files.createDirectories(directoryPath);
         }
 
+        MultipartFile downSizedImage = imageService.resizeImage(image, 20);
+
+        HashMap<String, String> originalImageInfo = saveImage(image, downloadsDir);
+        HashMap<String, String> downSizedImageInfo = saveImage(downSizedImage, downloadsDir);
+
+        if (downSizedImageInfo != null && originalImageInfo != null ) {
+                return ResourceInfo.builder()
+                        .originalFileName(originalImageInfo.get("originalFileName"))
+                        .newFileName(originalImageInfo.get("newFileName"))
+                        .downSizedFileName(downSizedImageInfo.get("newFileName"))
+                        .build();
+
+        }else {
+            return null;
+        }
+    }
+
+    private HashMap<String, String> saveImage(MultipartFile image, String directory) {
         try {
             String originalFileName = image.getOriginalFilename();
             String uniqueFileName = UUID.randomUUID().toString() + "_" + originalFileName;
-            File destination = new File(downloadsDir + uniqueFileName);
+            File destination = new File(directory + uniqueFileName);
 
             HashMap<String, String> response = new HashMap<>();
             response.put("originalFileName", originalFileName);
@@ -853,12 +927,13 @@ public class ProductsServices implements productServices {
             // Return a success response
             return response;
         } catch (IOException e) {
-            log.error("error from image");
+            log.error("Error from image");
             e.printStackTrace();
             // Handle the exception and return an error response
             return null;
         }
     }
+
 
 
     public List<ProductViewDto> getProductsByCategory(String category) {
@@ -868,12 +943,13 @@ public class ProductsServices implements productServices {
             var res = ProductViewDto.builder()
                     .name(product.getName())
                     .productId(product.getIdentifier())
-                    .imageURL(product.getImages() !=null ?ImplFunction.parseImageURL(product.getImages()):null)
+                    .imageURL(product.getImages() !=null ?ImplFunction.pareImageURLToMap(product.getImages()):null)
                     .regularPrice(product.getRegularPrice())
                     .rating(product.getAverageRating())
                     .published(product.isEnabled())
                     .stock(product.getStock())
-                    .thumbnail(product.getThumbnail() !=null ?ImplFunction.parseImageURL(product.getThumbnail()):null)
+
+                    .thumbnail(product.getThumbnail() !=null ?ImplFunction.pareImageURLToMap(product.getThumbnail()):null)
                     .category(product.getCategory())
                     .build();
             if(product.getSalePrice() != 0){

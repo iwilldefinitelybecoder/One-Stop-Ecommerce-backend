@@ -6,16 +6,14 @@ import com.Onestop.ecommerce.Entity.Logistics.WareHouse;
 import com.Onestop.ecommerce.Entity.user.userEntity;
 import com.Onestop.ecommerce.Entity.vendor.Vendor;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
