@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # Spring Boot App
+  app:
+    build:
+      context: .  # Path to the directory containing Dockerfile (current directory in this case)
+      dockerfile: Dockerfile  # This is optional if your Dockerfile is named `Dockerfile`
+
+    container_name: spring-app
+    ports:
+      - "8000:8000"  # Exposing the Spring Boot app on port 8080
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgresdb  # PostgreSQL connection
+      - SPRING_DATASOURCE_USERNAME=postgresuser  # PostgreSQL username
+      - SPRING_DATASOURCE_PASSWORD=postgrespass  # PostgreSQL password
+      - SPRING_DATA_MONGODB_URI=mongodb://mongouser:mongopass@mongodb:27017/mydatabase  # MongoDB connection
+    depends_on:
+      - mongodb
+      - postgres
+
+  # MongoDB Service
+  mongodb:
+    image: mongo:latest
+    container_name: mongo-db
+    ports:
+      - "27017:27017"  # Exposing the MongoDB default port
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongouser
+      MONGO_INITDB_ROOT_PASSWORD: mongopass
+      MONGO_INITDB_DATABASE: mydatabase  # Initialize MongoDB with a default database
+    volumes:
+      - mongo-data:/data/db  # Persistent storage for MongoDB data
+
+  # PostgreSQL Service
+  postgres:
+    image: postgres:latest
+    container_name: postgres-db
+    ports:
+      - "5432:5432"  # Exposing PostgreSQL default port
+    environment:
+      POSTGRES_USER: postgresuser
+      POSTGRES_PASSWORD: postgrespass
+      POSTGRES_DB: postgresdb  # Default database to be created
+    volumes:
+      - postgres-data:/var/lib/postgresql/data  # Persistent storage for PostgreSQL data
+
+# Persistent volumes for data storage
+volumes:
+  mongo-data:
+  postgres-data:

@@ -48,6 +48,7 @@ public class securityConfig{
                         cors.configurationSource((request)->{
                         var cors1 = new CorsConfiguration();
                         cors1.addAllowedOrigin("https://onestop.host");
+                        cors1.addAllowedOrigin("http://localhost:5173");
                         cors1.addAllowedMethod("*");
                         cors1.addAllowedHeader("*");
                         cors1.setAllowCredentials(true);
