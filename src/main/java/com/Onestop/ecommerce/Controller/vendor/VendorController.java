@@ -5,6 +5,8 @@ import com.Onestop.ecommerce.Service.VendorServices.VendorServices;
 import com.Onestop.ecommerce.Service.products.ProductsServices;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,26 +33,27 @@ public class VendorController {
         return ResponseEntity.status(200).body(services.authenticate(userName));
     }
 
-    @GetMapping("/getAll")
-    public ResponseEntity<?> getAllAddress(){
-        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-        try
-        {
-
-            return ResponseEntity.status(HttpStatus.OK).body(services.getAllProducts(userName));
-        }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
-
-
-
-    }
+//    @GetMapping("/getAll")
+//    public ResponseEntity<?> getAllAddress(){
+//        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+//        try
+//        {
+//
+//            return ResponseEntity.status(HttpStatus.OK).body(services.getAllProducts(userName));
+//        }catch (Exception e){
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+//        }
+//
+//
+//
+//    }
 
     @GetMapping("/getVendorProducts")
-    public ResponseEntity<?> getProductMajorDetails() {
+    public ResponseEntity<?> getProductMajorDetails(@RequestParam(value = "keyword",required = false)String keyword,@RequestParam(value = "page",defaultValue = "0")int page, @RequestParam(value = "size",defaultValue = "5") int size) {
         var userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        Pageable pageable = PageRequest.of(page, size);
         try {
-            return ResponseEntity.status(200).body(productsServices.getVendorProducts(userName));
+            return ResponseEntity.status(200).body(productsServices.getVendorProducts(keyword,userName, pageable));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }

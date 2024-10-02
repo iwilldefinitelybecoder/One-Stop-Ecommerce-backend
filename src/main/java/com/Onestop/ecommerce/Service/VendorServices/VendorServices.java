@@ -96,28 +96,28 @@ public class VendorServices implements VendorService {
         }
     }
 
-    @Override
-    public List<VendorProductList> getAllProducts(String userName) {
-        Vendor vendor = vendorRepository.findByUserEmail(userName).orElse(null);
-        if(vendor == null){
-            throw new RuntimeException("Vendor not found");
-        }
-        var products = productsRepo.findAllByVendorId(vendor.getId());
-        List<VendorProductList> vendorProductLists = new ArrayList<>();
-        for (var product:products) {
-            log.info("Product: {}",product.getId());
-            vendorProductLists.add(VendorProductList.builder()
-                    .productId(product.getIdentifier())
-                    .name(product.getName())
-                    .regularPrice(product.getRegularPrice())
-                    .salePrice(product.getSalePrice())
-                    .Stock(product.getStock())
-                    .isEnabled(product.isEnabled())
-                    .build());
-
-        }
-        return vendorProductLists;
-    }
+//    @Override
+//    public List<VendorProductList> getAllProducts(String userName) {
+//        Vendor vendor = vendorRepository.findByUserEmail(userName).orElse(null);
+//        if(vendor == null){
+//            throw new RuntimeException("Vendor not found");
+//        }
+//        var products = productsRepo.findAllByVendorId(vendor.getId());
+//        List<VendorProductList> vendorProductLists = new ArrayList<>();
+//        for (var product:products) {
+//            log.info("Product: {}",product.getId());
+//            vendorProductLists.add(VendorProductList.builder()
+//                    .productId(product.getIdentifier())
+//                    .name(product.getName())
+//                    .regularPrice(product.getRegularPrice())
+//                    .salePrice(product.getSalePrice())
+//                    .Stock(product.getStock())
+//                    .isEnabled(product.isEnabled())
+//                    .build());
+//
+//        }
+//        return vendorProductLists;
+//    }
 
     private String parseImageUrl(String imageName){
         return "http://localhost:8080/image-resources/product-Images"+imageName;

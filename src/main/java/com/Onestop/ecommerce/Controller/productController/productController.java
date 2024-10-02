@@ -206,10 +206,13 @@ public class productController {
     }
 
     @GetMapping("/attributes")
-    public ResponseEntity<?> getProductAttributes(@RequestParam(value = "attribute") MetaAttribute attribute) {
+    public ResponseEntity<?> getProductAttributes(@RequestParam(value = "attribute") MetaAttribute attribute,
+                                                    @RequestParam(name = "page",required = false,defaultValue = "0") int page,
+                                                    @RequestParam(name = "size",required = false,defaultValue = "6") int size) {
         try{
 
-            return ResponseEntity.status(200).body(ProductsServices.getProductAttributes(attribute));
+            Pageable pageable = PageRequest.of(page,size);
+            return ResponseEntity.status(200).body(ProductsServices.getProductAttributes(attribute,pageable));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(e.getMessage());
         }

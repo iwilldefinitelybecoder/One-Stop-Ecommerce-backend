@@ -34,7 +34,7 @@ public interface   productServices {
 
     List<ReviewRequest> getAllProductReviews(String productId);
 
-    List<ProductResponse> getProductAttributes(MetaAttribute attribute);
+    PaginationResponse getProductAttributes(MetaAttribute attribute, Pageable pageable);
 
 
     String updateProduct(productsDto request, String productId, List<MultipartFile> images, MultipartFile thumbnail);

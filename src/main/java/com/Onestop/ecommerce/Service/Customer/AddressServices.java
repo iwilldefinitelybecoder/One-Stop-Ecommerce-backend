@@ -75,7 +75,7 @@ public class AddressServices implements AddressService {
         address.setZipCode(request.getZipCode());
 
         addressRepo.save(address);
-        return "Address updated successfully";
+        return "SUCCESS";
     }
 
     @Override
@@ -89,6 +89,6 @@ public class AddressServices implements AddressService {
         var customer = customerServices.getCustomer(email);
         customer.getAddress().remove(address.get());
         customerServices.updateCustomer(customer);
-        return "Address deleted successfully";
+        return "SUCCESS";
     }
 }

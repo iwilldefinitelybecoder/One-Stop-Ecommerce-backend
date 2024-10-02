@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: springboot
+  template:
+    metadata:
+      labels:
+        app: springboot
+    spec:
+      containers:
+        - name: springboot
+          image: 0075841/onestop-backend:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/your-db-name
+            - name: SPRING_DATASOURCE_USERNAME
+              value: your-user
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: your-password
+            - name: SPRING_DATA_MONGODB_URI
+              value: mongodb://mongodb:27017/your-mongo-db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: springboot
+spec:
+  ports:
+    - port: 51300
+  selector:
+    app: springboot

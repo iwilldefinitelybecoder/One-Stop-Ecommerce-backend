@@ -12,7 +12,7 @@ public interface VendorService {
     String register(VendorRequest request);
     VendorLoginResponse authenticate(String email);
 
-    List<VendorProductList> getAllProducts(String userName);
+
 
     String deleteProduct(String identifier, String userName);
 

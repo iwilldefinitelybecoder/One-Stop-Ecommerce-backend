@@ -6,16 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
-import java.util.List;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductMinorDetails {
-    private String productId;
+public class VendorProductList{  private String productId;
     private String name;
-    private String imageURL;
+    private Map<String,String> imageURL;
     private Double regularPrice;
     private Double salePrice;
     private Integer stock;

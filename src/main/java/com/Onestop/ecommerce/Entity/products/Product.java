@@ -10,6 +10,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -57,6 +58,10 @@ public class Product {
   @OneToOne(mappedBy = "product", cascade = CascadeType.ALL)
     private ProductInventory productInventory;
 
+  @Temporal(TemporalType.TIMESTAMP)
+  private Date createdAt;
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date updatedAt;
 
 
 

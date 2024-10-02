@@ -63,5 +63,9 @@ public interface productsRepo extends JpaRepository<Product, Long> {
 
 
     List<Product> findAllByCategory(String category);
-    List<Product> findAllByVendorId(Long name);
+    @Query(value = "SELECT * FROM products WHERE (:keyword IS NULL OR POSITION(LOWER(:keyword) IN LOWER(name)) > 0) AND vendor_id = :vendorId ORDER BY CASE WHEN updated_at IS NOT NULL THEN updated_at ELSE created_at END DESC ", nativeQuery = true)
+    Page<Product> findAllByVendorId(@Param("keyword") String keyword, @Param("vendorId") Long vendorId, Pageable pageable);
+
+
+    Long countByVendorId(Long vendorId);
 }

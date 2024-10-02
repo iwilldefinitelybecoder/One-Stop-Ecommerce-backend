@@ -53,11 +53,12 @@ public class CardServices implements CardService {
     public String addCard(CardRequest cardRequest, String email) {
         Customer customer = getCustomer(email);
         var cards = customer.getPaymentCards();
-        var card = cardsRepo.findByIdentifier(cardRequest.getCardId()).orElse(null);
+
+        Long cardNumber = Long.parseLong(cardRequest.getCardNumber().replaceAll("\\s+",""));
+        var card = cardsRepo.findByNumber(cardNumber).orElse(null);
         if(cards.contains(card)){
             return "CARD_EXISTS";
         }
-        Long cardNumber = Long.parseLong(cardRequest.getCardNumber().replaceAll("\\s+",""));
         var newCard = Cards.builder()
                 .number(CheckIfCardExists(cardNumber))
                 .name(cardRequest.getCardHolderName())

@@ -38,6 +38,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -155,6 +156,7 @@ public class ProductsServices implements productServices {
                 .regularPrice(request.getRegularPrice())
                 .tags(newTags)
                 .salePrice(request.getSalePrice() !=0?request.getSalePrice():0)
+                .createdAt(new Date())
                 .build();
         var inventoryProduct = ProductInventory.builder()
                 .product(product)
@@ -512,9 +514,9 @@ public class ProductsServices implements productServices {
     }
 
     @Override
-    public List<ProductResponse> getProductAttributes(MetaAttribute attribute) {
+    public PaginationResponse getProductAttributes(MetaAttribute attribute, Pageable pageable) {
         log.info( "{}",attribute);
-        List<MetaAttributes> products = specialAttributesRepo.findAllProductByAttributesAndIsActive(attribute,true);
+        Page<MetaAttributes> products = specialAttributesRepo.findAllProductByAttributesAndIsActive(attribute,true,pageable);
         List<ProductResponse> productsList = new ArrayList<>();
         products.forEach(product -> {
             if(!product.getProduct().isEnabled()){
@@ -542,9 +544,16 @@ public class ProductsServices implements productServices {
             productsList.add(response);
         });
 
-        return productsList.stream()
-                .sorted(Comparator.comparingDouble(ProductResponse::getRating).reversed())
-                .collect(Collectors.toList());
+         return PaginationResponse.builder()
+                         .totalPages(products.getTotalPages())
+                            .totalElements(products.getTotalElements())
+                                    .elements( productsList.stream()
+                                            .sorted(Comparator.comparingDouble(ProductResponse::getRating).reversed())
+                                            .collect(Collectors.toList()))
+                                            .currentPage(products.getNumber())
+                                             .build();
+
+
     }
 
 
@@ -618,6 +627,7 @@ public class ProductsServices implements productServices {
         product.setThumbnail(request.getThumbnail() != null
                 ? resourceRepo.findByUrl(request.getThumbnail().substring(request.getThumbnail().lastIndexOf('/') + 1))
                 : null);
+        product.setUpdatedAt(new Date());
         product.setTags(newTags);
         product.setSalePrice(request.getSalePrice() != 0 ? request.getSalePrice() : 0);
         inventory.getWareHouse().setCapacity(inventory.getWareHouse().getCapacity() + inventory.getStock() - request.getStock());
@@ -773,23 +783,29 @@ public class ProductsServices implements productServices {
         return Arrays.asList(MetaAttribute.values());
     }
 
-    public List<ProductMinorDetails> getVendorProducts(String email){
+    public PaginationResponse getVendorProducts(String keyword,String email, Pageable pageable){
+
         var vendor = vendorRepo.findByUserEmail(email).orElseThrow(()-> new RuntimeException("vendor not found"));
-        List<ProductMinorDetails> products = new ArrayList<>();
-        productsRepo.findAllByVendorId(vendor.getId()).forEach(product -> {
-            var response = ProductMinorDetails.builder()
+        List<VendorProductList> products = new ArrayList<>();
+        Page <Product> productPage = productsRepo.findAllByVendorId(keyword,vendor.getId(),pageable);
+        productPage.forEach(product -> {
+            var response = VendorProductList.builder()
                     .productId(product.getIdentifier())
                     .name(product.getName())
-//                    .imageURL(parseImageURL(product.getImages().get(0)))
                     .regularPrice(product.getRegularPrice())
                     .salePrice(product.getSalePrice())
-                    .imageURL(product.getThumbnail() != null? ImplFunction.parseImageURL(product.getThumbnail()) : ImplFunction.parseImageURL(product.getImages().get(0)))
+                    .imageURL(product.getThumbnail() != null? ImplFunction.pareImageURLToMap(product.getThumbnail()) : ImplFunction.pareImageURLToMap(product.getImages().get(0)))
                     .innDate(product.getProductInventory().getInDate())
                     .stock(product.getStock())
                     .build();
             products.add(response);
         });
-        return products;
+
+        return PaginationResponse.builder()
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .elements(products)
+                .build();
 
     }
 
@@ -840,6 +856,7 @@ public class ProductsServices implements productServices {
         product.setRegularPrice(request.getRegularPrice());
         product.setSalePrice(request.getSalePrice() != 0 ? request.getSalePrice() : 0);
         product.setStock( request.getQuantity());
+        product.setUpdatedAt(new Date());
         inventory.getWareHouse().setCapacity(inventory.getWareHouse().getCapacity() + inventory.getStock() - request.getQuantity());
         inventory.setStock(request.getQuantity());
         inventoryRepo.save(inventory);
