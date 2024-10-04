@@ -19,15 +19,15 @@ spec:
             - containerPort: 8080
           env:
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres:5432/onestopDB
+              value: "jdbc:postgresql://postgres:5432/onestopDB"
             - name: SPRING_DATASOURCE_USERNAME
-              value: postgres
+              value: "postgres"
             - name: SPRING_DATASOURCE_PASSWORD
-              value: 0000
+              value: "0000"
             - name: SPRING_DATA_MONGODB_URI
-              value: mongodb://mongodb:27017/ecommerce
+              value: "mongodb://mongodb:27017/ecommerce"
             - name: SPRING_DATASOURCE_PROFILE
-              value: prod
+              value: "prod"
 ---
 apiVersion: v1
 kind: Service

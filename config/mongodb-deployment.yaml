@@ -23,11 +23,11 @@ spec:
               name: mongodb-storage
           env:
             - name: MONGO_INITDB_DATABASE
-              value: ecommerce           # Optional: Specifies the initial database to create.
+              value: "ecommerce"           # Optional: Specifies the initial database to create.
             - name: MONGO_INITDB_ROOT_USERNAME
-              value: root                # Optional: Root username.
+              value: "root"                # Optional: Root username.
             - name: MONGO_INITDB_ROOT_PASSWORD
-              value: 123456                # Optional: Root password.
+              value: "123456"                # Optional: Root password.
       volumes:
         - name: mongodb-storage
           persistentVolumeClaim:

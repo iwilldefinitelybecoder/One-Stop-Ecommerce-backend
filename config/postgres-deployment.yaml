@@ -20,11 +20,11 @@ spec:
             - containerPort: 5432
           env:
             - name: POSTGRES_DB
-              value: onestopDB      # This is the database that will be created.
+              value: "onestopDB"      # This is the database that will be created.
             - name: POSTGRES_USER
-              value: postgres        # The username for connecting to PostgreSQL.
+              value: "postgres"        # The username for connecting to PostgreSQL.
             - name: POSTGRES_PASSWORD
-              value: 0000           # The password for the PostgreSQL user.
+              value: "0000"           # The password for the PostgreSQL user.
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: postgres-storage
