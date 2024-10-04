@@ -32,7 +32,9 @@ kind: Service
 metadata:
   name: springboot
 spec:
+  type: ClusterIP  # Specify the service type (ClusterIP is default)
   ports:
     - port: 51300
+      targetPort: 8080  # Map the service port to the container port
   selector:
     app: springboot
