@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
+  namespace: onestop
 spec:
   replicas: 1
   selector:
@@ -14,19 +15,20 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:latest
+          image: postgres:13
           ports:
             - containerPort: 5432
           env:
             - name: POSTGRES_DB
-              value: your-db-name
+              value: onestopDB      # This is the database that will be created.
             - name: POSTGRES_USER
-              value: your-user
+              value: postgres        # The username for connecting to PostgreSQL.
             - name: POSTGRES_PASSWORD
-              value: your-password
+              value: 0000           # The password for the PostgreSQL user.
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: postgres-storage
+              subPath: pgdata        # Optional: This can help manage data more cleanly.
       volumes:
         - name: postgres-storage
           persistentVolumeClaim:
@@ -36,8 +38,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres
+  namespace: onestop           # Specify the namespace for the service as well.
 spec:
   ports:
     - port: 5432
+      targetPort: 5432          # Make sure to specify the targetPort.
   selector:
     app: postgres
+  type: ClusterIP             # Specify the service type if not defaulting to ClusterIP.

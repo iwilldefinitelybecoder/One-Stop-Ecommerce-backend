@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mongodb
+  namespace: onestop
 spec:
   replicas: 1
   selector:
@@ -14,12 +15,19 @@ spec:
     spec:
       containers:
         - name: mongodb
-          image: mongo:latest
+          image: mongo:4.4
           ports:
             - containerPort: 27017
           volumeMounts:
             - mountPath: /data/db
               name: mongodb-storage
+          env:
+            - name: MONGO_INITDB_DATABASE
+              value: ecommerce           # Optional: Specifies the initial database to create.
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: root                # Optional: Root username.
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: 123456                # Optional: Root password.
       volumes:
         - name: mongodb-storage
           persistentVolumeClaim:
@@ -29,8 +37,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mongodb
+  namespace: onestop            # Specify the namespace for the service.
 spec:
   ports:
     - port: 27017
+      targetPort: 27017          # Ensure the target port is specified.
   selector:
     app: mongodb
+  type: ClusterIP                # Specify the service type.

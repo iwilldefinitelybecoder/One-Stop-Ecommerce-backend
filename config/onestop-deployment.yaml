@@ -19,20 +19,22 @@ spec:
             - containerPort: 8080
           env:
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres:5432/your-db-name
+              value: jdbc:postgresql://postgres:5432/onestopDB
             - name: SPRING_DATASOURCE_USERNAME
-              value: your-user
+              value: postgres
             - name: SPRING_DATASOURCE_PASSWORD
-              value: your-password
+              value: 0000
             - name: SPRING_DATA_MONGODB_URI
-              value: mongodb://mongodb:27017/your-mongo-db
+              value: mongodb://mongodb:27017/ecommerce
+            - name: SPRING_DATASOURCE_PROFILE
+              value: prod
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: springboot
 spec:
-  type: ClusterIP  # Specify the service type (ClusterIP is default)
+  type: LoadBalancer  # Specify the service type (ClusterIP is default)
   ports:
     - port: 51300
       targetPort: 8080  # Map the service port to the container port
