@@ -1,11 +1,14 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
   name: springboot-ingress
   namespace: onestop
 spec:
+  ingressClassName: nginx
   rules:
-    - host: onestop.online # Replace with your domain
+    - host: service.onestop.host
       http:
         paths:
           - path: /
@@ -14,4 +17,4 @@ spec:
               service:
                 name: springboot
                 port:
-                  number: 51300 # Same port as defined in the Service
+                  number: 51300
